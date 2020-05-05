@@ -7,4 +7,4 @@ test:
   interruptible: false
   stage: test
   script:
-    - python index.py
+    - python test.py
