@@ -47,7 +47,7 @@ resource "aws_iam_policy" "user_creation_lambda_role_policy" {
       "Resource": "*",
       "Effect": "Allow"
     }
-  ]
+  ]\
 }
 EOF
 }
