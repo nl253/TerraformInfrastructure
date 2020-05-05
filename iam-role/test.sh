@@ -4,6 +4,7 @@ echo given valid configuration is provided
 terraform validate 1>/dev/null || exit 1
 
 echo given valid input vars are provided
+planFile=plan
 principal='{ Service = "lambda.amazonaws.com" }'
 resource='"*"'
 name="lambdaTestRoleToCheckIfThisWorks${RANDOM}${RANDOM}"
@@ -14,14 +15,11 @@ terraform plan -var "name=${name}" \
                -var "appName=${name}" \
                -var "principal=${principal}" \
                -var "resource=${resource}" \
-               -var "action=${action}" 1>/dev/null || exit 1
+               -var "action=${action}" \
+               -out "${planFile}" 1>/dev/null || exit 1
 
 echo configuration is applied successfully
-terraform apply -auto-approve -var "name=${name}" \
-                              -var "appName=${name}" \
-                              -var "principal=${principal}" \
-                              -var "resource=${resource}" \
-                              -var "action=${action}" 1>/dev/null || exit 1
+terraform apply -auto-approve ${planFile} 1>/dev/null || exit 1
 
 echo resources are destroyed successfully
 terraform destroy -auto-approve -var "name=${name}" \
