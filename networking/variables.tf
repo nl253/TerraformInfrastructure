@@ -9,16 +9,13 @@ variable "az" {
 }
 
 variable "cidrVpc" {
-  type    = string
-  default = "192.168.0.0/16"
+  type = string
 }
 
 variable "cidrPublic" {
-  type    = string
-  default = "192.168.0.0/24"
+  type = string
 }
 
 variable "cidrPrivate" {
-  type    = string
-  default = "192.168.1.0/24"
+  type = string
 }
