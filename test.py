@@ -4,9 +4,9 @@ from pathlib import Path
 from subprocess import run, PIPE
 from typing import Iterator
 from os import chdir
-from os.path import dirname
+from os.path import dirname, abspath
 
-ROOT = dirname(__file__)
+ROOT = dirname(abspath(__file__))
 
 chdir(ROOT)
 
