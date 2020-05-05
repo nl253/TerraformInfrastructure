@@ -15,7 +15,8 @@ def find_test_files(ext: str) -> Iterator[str]:
     return map(str, filter(lambda p: p.is_file(), map(lambda p: p.resolve(), Path('.').glob(f'./*/test.{ext}'))))
 
 
-tests = list(find_test_files('sh')) + list(find_test_files('py'))
+tests = list(find_test_files('sh')) + \
+        list(find_test_files('py'))
 
 print(f'collected tests {tests}')
 
