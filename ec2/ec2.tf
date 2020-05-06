@@ -4,9 +4,9 @@ provider "aws" {
 }
 
 resource "aws_iam_policy_attachment" "example_policy_attachment" {
-  name = "example_policy_attachment"
+  name       = "example_policy_attachment"
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
-  roles = [aws_iam_role.example_role.name]
+  roles      = [aws_iam_role.example_role.name]
 }
 
 resource "aws_iam_role" "example_role" {
@@ -29,8 +29,8 @@ resource "aws_vpc" "example_vpc" {
 }
 
 resource "aws_subnet" "example_subnet_public" {
-  vpc_id = aws_vpc.example_vpc.id
-  cidr_block = "10.0.0.0/24"
+  vpc_id            = aws_vpc.example_vpc.id
+  cidr_block        = "10.0.0.0/24"
   availability_zone = "eu-west-2c"
 }
 
@@ -39,21 +39,21 @@ resource "aws_security_group" "example_security_group" {
 }
 
 resource "aws_security_group_rule" "example_security_group_rule_inbound" {
-  from_port = 80
-  protocol = "tcp"
+  from_port         = 80
+  protocol          = "tcp"
   security_group_id = aws_security_group.example_security_group.id
-  to_port = 8080
-  cidr_blocks = ["0.0.0.0/0"]
-  type = "ingress"
+  to_port           = 8080
+  cidr_blocks       = ["0.0.0.0/0"]
+  type              = "ingress"
 }
 
 resource "aws_security_group_rule" "example_security_group_rule_outbound" {
-  from_port = 0
-  protocol = "tcp"
+  from_port         = 0
+  protocol          = "tcp"
   security_group_id = aws_security_group.example_security_group.id
-  cidr_blocks = ["0.0.0.0/0"]
-  to_port = 0
-  type = "egress"
+  cidr_blocks       = ["0.0.0.0/0"]
+  to_port           = 0
+  type              = "egress"
 }
 
 resource "aws_instance" "example" {

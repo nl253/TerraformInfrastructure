@@ -1,23 +1,18 @@
 provider "aws" {
-  profile = "ma"
   region  = "eu-west-2"
-}
-
-variable "bucket_name" {
-  default = "my-special-bucket-for-storing-stuff"
-  type    = string
+  profile = "ma"
 }
 
 data "aws_caller_identity" "id" {}
-data "aws_s3_bucket" "logging_bucket" {
-  bucket = "logs-nl"
-}
 
 resource "aws_s3_bucket" "bucket" {
   bucket        = var.bucket_name
   force_destroy = true
+  tags = {
+    APP = var.app_name
+  }
   logging {
-    target_bucket = data.aws_s3_bucket.logging_bucket.bucket
+    target_bucket = var.logging_bucket
     target_prefix = var.bucket_name
   }
   server_side_encryption_configuration {
@@ -28,10 +23,10 @@ resource "aws_s3_bucket" "bucket" {
     }
   }
   cors_rule {
-    allowed_methods = ["POST", "GET"]
+    allowed_methods = ["GET"]
     allowed_origins = ["*"]
     expose_headers  = ["Content-Type", "Content-Length", "Encoding", "Content-Encoding", "Transfer-Encoding"]
-    allowed_headers = ["Accept"]
+    allowed_headers = ["Accept", "Accept-Language", "Accept-Encoding", "Accept-Charset", "Cache-Control", "Content-Encoding"]
   }
 }
 
@@ -42,7 +37,7 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
     Id      = "",
     Statement = [
       {
-        Sid       = "AllowAccessTo${title(aws_s3_bucket.bucket.bucket)}FromMyAccount"
+        Sid       = "AllowAccessTo${aws_s3_bucket.bucket.bucket}FromMyAccount"
         Effect    = "Allow"
         Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.id.account_id}:user/ma" }
         Action    = "s3:*"

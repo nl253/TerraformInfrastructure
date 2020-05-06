@@ -7,9 +7,9 @@ resource "aws_iam_role" "role" {
   name                  = var.name
   path                  = var.path
   force_detach_policies = true
-  max_session_duration  = var.sessionDurationSecs
+  max_session_duration  = var.sessions_duration_secs
   tags = {
-    APP = var.appName
+    APP = var.app_name
   }
   assume_role_policy = jsonencode({
     Version = "2012-10-17",

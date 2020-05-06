@@ -6,16 +6,16 @@ provider "aws" {
 resource "aws_internet_gateway" "ig" {
   vpc_id = aws_vpc.vpc.id
   tags = {
-    APP = var.appName
+    APP = var.app_name
   }
 }
 
 resource "aws_vpc" "vpc" {
-  cidr_block                       = var.cidrVpc
+  cidr_block                       = var.cidr_vpc
   assign_generated_ipv6_cidr_block = false
   enable_dns_hostnames             = false
   tags = {
-    APP = var.appName
+    APP = var.app_name
   }
 }
 
@@ -23,7 +23,7 @@ resource "aws_eip" "ip" {
   depends_on = [aws_internet_gateway.ig, aws_vpc.vpc]
   vpc        = true
   tags = {
-    APP = var.appName
+    APP = var.app_name
   }
 }
 
@@ -32,6 +32,6 @@ resource "aws_nat_gateway" "nat" {
   subnet_id     = aws_subnet.subnet_public.id
   allocation_id = aws_eip.ip.id
   tags = {
-    APP = var.appName
+    APP = var.app_name
   }
 }

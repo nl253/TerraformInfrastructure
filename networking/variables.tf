@@ -1,4 +1,4 @@
-variable "appName" {
+variable "app_name" {
   type    = string
   default = "TestApp"
 }
@@ -8,14 +8,14 @@ variable "az" {
   default = "eu-west-2a"
 }
 
-variable "cidrVpc" {
+variable "cidr_vpc" {
   type = string
 }
 
-variable "cidrPublic" {
+variable "cidr_public" {
   type = string
 }
 
-variable "cidrPrivate" {
+variable "cidr_private" {
   type = string
 }

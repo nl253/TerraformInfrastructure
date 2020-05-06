@@ -23,7 +23,7 @@ print(f'collected tests {tests}')
 for script in tests:
     chdir(dirname(script))
     print('initialising terraform')
-    print(run(['terraform', 'init'], stdout=PIPE).stdout.decode('utf-8'))
+    print(run(['terraform', 'init'], stderr=PIPE).stderr.decode('utf-8'))
     print(f"running tests in {script}")
     process = run(["python3", script] if script.endswith('py') else ['bash', '-c', script], stdout=PIPE)
     output = process.stdout.decode('utf-8')

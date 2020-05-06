@@ -1,11 +1,11 @@
 resource "aws_subnet" "subnet_private" {
-  cidr_block                      = var.cidrPrivate
+  cidr_block                      = var.cidr_private
   vpc_id                          = aws_vpc.vpc.id
   availability_zone               = var.az
   map_public_ip_on_launch         = false
   assign_ipv6_address_on_creation = false
   tags = {
-    APP = var.appName
+    APP = var.app_name
   }
 }
 
@@ -29,7 +29,7 @@ resource "aws_network_acl" "private_nacl" {
     to_port    = 0
   }
   tags = {
-    APP = var.appName
+    APP = var.app_name
   }
 }
 
@@ -40,7 +40,7 @@ resource "aws_route_table" "route_table_private" {
     nat_gateway_id = aws_nat_gateway.nat.id
   }
   tags = {
-    APP = var.appName
+    APP = var.app_name
   }
 }
 
@@ -50,7 +50,7 @@ resource "aws_route_table_association" "route_table_association_private" {
 }
 
 resource "aws_security_group" "private_sg" {
-  name                   = "${var.appName}PrivateSecurityGroup"
+  name                   = "${var.app_name}PrivateSecurityGroup"
   vpc_id                 = aws_vpc.vpc.id
   revoke_rules_on_delete = true
   ingress {
@@ -65,6 +65,6 @@ resource "aws_security_group" "private_sg" {
     to_port   = 0
   }
   tags = {
-    APP = var.appName
+    APP = var.app_name
   }
 }

@@ -24,12 +24,12 @@ variable "path" {
   default     = "/"
 }
 
-variable "sessionDurationSecs" {
+variable "sessions_duration_secs" {
   type        = number
   description = "How many seconds sessions should last for."
   default     = 3600
 }
 
-variable "appName" {
+variable "app_name" {
   type = string
 }
