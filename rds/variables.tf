@@ -44,11 +44,21 @@ variable "db_storage_type" {
 }
 
 variable "db_encrypted" {
-  default = true
+  default = false
   type    = bool
 }
 
 variable "db_public" {
-  default = true
+  default = false
+  type    = bool
+}
+
+variable "db_performance_insights" {
+  default = false
+  type    = bool
+}
+
+variable "db_multi_az" {
+  default = false
   type    = bool
 }
