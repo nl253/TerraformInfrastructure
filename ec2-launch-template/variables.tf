@@ -1,6 +1,16 @@
+variable "env" {
+  type    = string
+  default = "dev"
+}
+
 variable "app_name" {
   type    = string
   default = "testapp-lb-asg-ec2"
+}
+
+variable "alb_protocol" {
+  type = string
+  default = "HTTP"
 }
 
 variable "vpc_id" {

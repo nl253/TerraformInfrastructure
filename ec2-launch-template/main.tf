@@ -9,7 +9,25 @@ resource "aws_launch_template" "spot_fleet_fleet_launch_template" {
   user_data               = var.ec2_user_data
   instance_type           = var.ec2_instance_type
   disable_api_termination = false
-  name                    = "${var.app_name}-spot-fleet-launch-template"
+  tags = {
+    Environment = var.env
+    Application = var.app_name
+  }
+  tag_specifications {
+    resource_type = "volume"
+    tags = {
+      Environment = var.env
+      Application = var.app_name
+    }
+  }
+  tag_specifications {
+    resource_type = "instance"
+    tags = {
+      Environment = var.env
+      Application = var.app_name
+    }
+  }
+  name = "${var.app_name}-spot-fleet-launch-template"
   /*network_interfaces {
     associate_public_ip_address = false
     delete_on_termination       = true
@@ -30,7 +48,7 @@ resource "aws_launch_template" "spot_fleet_fleet_launch_template" {
     }
   }
   monitoring {
-    enabled = false
+    enabled = true
   }
 }
 
@@ -51,17 +69,26 @@ resource "aws_autoscaling_group" "scaling_group" {
   desired_capacity = var.asg_desired_capacity
   enabled_metrics  = var.ec2_metrics
   tag {
-    key                 = var.app_name
-    value               = "instance"
-    propagate_at_launch = true
+    key = "Environment"
+    propagate_at_launch = false
+    value = var.env
+  }
+  tag {
+    key = "Application"
+    propagate_at_launch = false
+    value = var.app_name
   }
 }
 
 resource "aws_lb_target_group" "target_group" {
   name     = "${var.app_name}-target-group"
   port     = var.port
-  protocol = "HTTP"
+  protocol = var.alb_protocol
   vpc_id   = var.vpc_id
+  tags = {
+    Environment = var.env
+    Application = var.app_name
+  }
 }
 
 resource "aws_security_group" "load_balancer_sg" {
@@ -74,6 +101,10 @@ resource "aws_security_group" "load_balancer_sg" {
     from_port = 0
     protocol  = "tcp"
     to_port   = 0
+  }
+  tags = {
+    Environment = var.env
+    Application = var.app_name
   }
 }
 
@@ -88,6 +119,13 @@ resource "aws_security_group" "instance_sg" {
     from_port = 0
     protocol  = "tcp"
     to_port   = 0
+  }
+  tags = {
+    Environment = var.env
+    Application = var.app_name
+  }
+  lifecycle {
+    create_before_destroy = true
   }
 }
 
@@ -107,4 +145,8 @@ resource "aws_lb" "load_balancer" {
   security_groups            = [aws_security_group.load_balancer_sg.id]
   enable_deletion_protection = false
   ip_address_type            = "ipv4"
+  tags = {
+    Environment = var.env
+    Application = var.app_name
+  }
 }

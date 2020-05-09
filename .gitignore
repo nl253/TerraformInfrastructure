@@ -2,3 +2,6 @@
 **/plan
 **/*.zip
 **/terraform.tfstate
+/ami-simple.json
+/ami.json
+/ami-simple-simple.json
