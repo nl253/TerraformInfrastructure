@@ -13,3 +13,7 @@ output "storage_account" {
 output "app_service_plan" {
   value = azurerm_app_service_plan.app_service_plan
 }
+
+output "app_insights" {
+  value = azurerm_application_insights.app_insights
+}

@@ -36,3 +36,28 @@ variable "function_app_run_from_package" {
   type = bool
   default = true
 }
+
+variable "function_app_https_only" {
+  type = bool
+  default = true
+}
+
+variable "storage_account_tier" {
+  type = string
+  default = "Standard"
+}
+
+variable "storage_account_replication" {
+  type = string
+  default = "LRS"
+}
+
+variable "app_service_plan_tier" {
+  type = string
+  default = "Dynamic"
+}
+
+variable "app_service_plan_size" {
+  type = string
+  default = "Y1"
+}

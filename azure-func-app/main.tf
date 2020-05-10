@@ -5,14 +5,34 @@ provider "azurerm" {
   features {}
 }
 
+resource "azurerm_resource_group" "rg" {
+  name = "${var.app_name}-resource-group"
+  location = var.region
+  tags = {
+    Application = var.app_name
+    Environment = var.env
+  }
+}
+
 resource "azurerm_app_service_plan" "app_service_plan" {
   location = var.region
   name = "${var.app_name}-app-service-plan"
   resource_group_name = azurerm_resource_group.rg.name
   sku {
-    tier = "Dynamic"
-    size = "Y1"
+    tier = var.app_service_plan_tier
+    size = var.app_service_plan_size
   }
+  tags = {
+    Application = var.app_name
+    Environment = var.env
+  }
+}
+
+resource "azurerm_application_insights" "app_insights" {
+  application_type = "other"
+  location = var.region
+  name = "${var.app_name}-app-insights"
+  resource_group_name = azurerm_resource_group.rg.name
   tags = {
     Application = var.app_name
     Environment = var.env
@@ -25,7 +45,7 @@ resource "azurerm_function_app" "function_app" {
   name = "${var.app_name}-function-app"
   resource_group_name = azurerm_resource_group.rg.name
   enable_builtin_logging = true
-  https_only = true
+  https_only = var.function_app_https_only
   enabled = true
   version = var.function_app_runtime_version
   client_affinity_enabled = true
@@ -50,18 +70,9 @@ resource "azurerm_function_app" "function_app" {
   storage_connection_string = azurerm_storage_account.storage_account.primary_connection_string
 }
 
-resource "azurerm_resource_group" "rg" {
-  name = "testResourceGroup"
-  location = var.region
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
-}
-
 resource "azurerm_storage_account" "storage_account" {
-  account_replication_type = "LRS"
-  account_tier = "Standard"
+  account_replication_type = var.storage_account_replication
+  account_tier = var.storage_account_tier
   location = var.region
   name = "${var.app_name}store"
   resource_group_name = azurerm_resource_group.rg.name
