@@ -8,13 +8,16 @@ data "aws_caller_identity" "id" {}
 resource "aws_s3_bucket" "bucket" {
   bucket        = var.bucket_name
   force_destroy = true
+
   tags = {
-    APP = var.app_name
+    Application = var.app_name
+    Environment = var.env
   }
   logging {
     target_bucket = var.logging_bucket
     target_prefix = var.bucket_name
   }
+
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
@@ -39,7 +42,7 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
       {
         Sid       = "AllowAccessTo${aws_s3_bucket.bucket.bucket}FromMyAccount"
         Effect    = "Allow"
-        Principal = { AWS = "arn:aws:iam::${data.aws_caller_identity.id.account_id}:user/ma" }
+        Principal = { AWS = data.aws_caller_identity.id.account_id }
         Action    = "s3:*"
         Resource  = "arn:aws:s3:::${aws_s3_bucket.bucket.bucket}/*"
       }

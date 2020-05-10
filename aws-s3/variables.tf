@@ -9,3 +9,9 @@ variable "app_name" {
 variable "logging_bucket" {
   type = string
 }
+
+variable "env" {
+  default = "dev"
+  type = string
+}
+
