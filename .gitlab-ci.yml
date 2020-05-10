@@ -9,5 +9,9 @@ test:
   script:
     - bash -c 'wget "https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"'
     - bash -c 'unzip "terraform_${TERRAFORM_VERSION}_linux_amd64.zip"'
+    - bash -c 'wget "https://github.com/liamg/tfsec/releases/download/v${TFSEC_VERSION}/tfsec-linux-amd64"'
+    - chmod +x tfsec-linux-amd64
+    - mv tfsec-linux-amd64 /usr/bin/tfsec
     - mv terraform /usr/bin/
+    - pip install checkov
     - python test.py
