@@ -3,8 +3,14 @@ variable "region" {
   type    = string
 }
 
+variable "env" {
+  type    = string
+  default = "dev"
+}
+
 variable "app_name" {
-  type = string
+  type    = string
+  default = "testapp"
 }
 
 variable "vm_size" {
