@@ -62,6 +62,12 @@ variable "efs_transition_to_ia" {
   default = "AFTER_30_DAYS"
 }
 
+variable "route53_zone_id" {
+  type = string
+  default = "Z0336293PW1VCW37F5HY"
+}
+
 data "aws_subnet_ids" "subnet_ids" {
   vpc_id = var.vpc_id
 }
+

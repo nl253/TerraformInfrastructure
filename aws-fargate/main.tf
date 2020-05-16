@@ -152,6 +152,7 @@ resource "aws_ecs_service" "service" {
   platform_version = "1.4.0"
   desired_count    = length(tolist(data.aws_subnet_ids.subnet_ids.ids))
   launch_type      = "FARGATE"
+  health_check_grace_period_seconds = 300
   network_configuration {
     subnets          = tolist(data.aws_subnet_ids.subnet_ids.ids)
     security_groups  = [aws_security_group.sg.id]
@@ -177,6 +178,17 @@ resource "aws_alb_target_group" "alb_target" {
   stickiness {
     type    = "lb_cookie"
     enabled = true
+  }
+  health_check {
+    enabled = true
+    interval = 30
+    path = "/"
+    port = "8080"
+    healthy_threshold = 3
+    matcher = "200-299"
+    unhealthy_threshold = 3
+    protocol = "HTTP"
+    timeout = "15"
   }
   target_type = "ip"
   count       = 2
@@ -209,4 +221,13 @@ resource "aws_alb" "alb" {
     Application = var.app_name
     Environment = var.env
   }
+}
+
+resource "aws_route53_record" "dns_records" {
+  name = count.index == 0 ? var.app_name : "${var.app_name}2"
+  type = "CNAME"
+  ttl = "300"
+  zone_id = var.route53_zone_id
+  records = [aws_alb.alb[count.index].dns_name]
+  count = 2
 }
