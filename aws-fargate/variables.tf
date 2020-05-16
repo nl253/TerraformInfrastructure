@@ -29,13 +29,13 @@ variable "task_cpu" {
 }
 
 variable "vpc_id" {
-  type = string
+  type    = string
   default = "vpc-96542efe"
 }
 
 variable "subnets" {
   type    = list(string)
-  default = ["subnet-93a129e9"]
+  default = ["subnet-93a129e9", "subnet-ef8bc786"]
 }
 
 variable "task_port_mappings" {
@@ -53,11 +53,15 @@ variable "task_port_mappings" {
 }
 
 variable "region" {
-  type = string
+  type    = string
   default = "eu-west-2"
 }
 
 variable "efs_transition_to_ia" {
-  type = string
+  type    = string
   default = "AFTER_30_DAYS"
+}
+
+data "aws_subnet_ids" "subnet_ids" {
+  vpc_id = var.vpc_id
 }

@@ -16,7 +16,7 @@ terraform apply -auto-approve ${plan_file} 1>/dev/null || exit 1
 
 echo resources are destroyed successfully
 
-terraform destroy -auto-approve -var "app_name=${app_name}" 1>/dev/null || echo failed to destry on frist attempt
+terraform destroy -auto-approve -var "app_name=${app_name}" 1>/dev/null || echo failed to destroy on 1st attempt
 terraform destroy -auto-approve -var "app_name=${app_name}" 1>/dev/null || exit 1
 
 echo SUCCESS
