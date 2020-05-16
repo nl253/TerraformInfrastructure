@@ -80,10 +80,10 @@ resource "aws_iam_role" "task_role" {
     Environment = var.env
   }
   assume_role_policy = jsonencode({
-    Version = "2012-10-17",
+    Version = "2012-10-17"
     Statement = [
       {
-        Action = "sts:AssumeRole",
+        Action = "sts:AssumeRole"
         Principal = {
           Service = "ecs-tasks.amazonaws.com"
         }
@@ -125,18 +125,23 @@ resource "aws_ecs_task_definition" "task" {
   memory                   = var.task_memory
   cpu                      = var.task_cpu
   family                   = "${var.app_name}-task"
+
   volume {
     name = "${var.app_name}-storage"
-    docker_volume_configuration {
+    efs_volume_configuration {
+      file_system_id = aws_efs_file_system.efs.id
+      root_directory = "/"
+    }
+    /*docker_volume_configuration {
       scope         = "shared"
-      autoprovision = true
+      autoprovision = false
       driver        = "local"
       driver_opts = {
         type   = "nfs"
         device = "${aws_efs_file_system.efs.dns_name}:/"
         o      = "addr=${aws_efs_file_system.efs.dns_name},rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport"
       }
-    }
+    }*/
   }
   tags = {
     Application = var.app_name
@@ -185,7 +190,7 @@ resource "aws_alb_target_group" "alb_target" {
     path = "/"
     port = "8080"
     healthy_threshold = 3
-    matcher = "200-299"
+    matcher = "200-299,403"
     unhealthy_threshold = 3
     protocol = "HTTP"
     timeout = "15"
@@ -199,7 +204,7 @@ resource "aws_alb_target_group" "alb_target" {
 }
 
 resource "aws_lb_listener" "listener" {
-  load_balancer_arn = aws_alb.alb[count.index].arn
+  load_balancer_arn = aws_alb.alb.arn
   port     = count.index == 0 ? 8080 : 50000
   protocol = "HTTP"
   default_action {
@@ -210,13 +215,12 @@ resource "aws_lb_listener" "listener" {
 }
 
 resource "aws_alb" "alb" {
-  name = "${var.app_name}-load-balancer-${count.index}"
+  name = "${var.app_name}-load-balancer"
   enable_deletion_protection = false
   load_balancer_type = "application"
   subnets = tolist(data.aws_subnet_ids.subnet_ids.ids)
   internal = false
   security_groups = [aws_security_group.sg.id]
-  count = 2
   tags = {
     Application = var.app_name
     Environment = var.env
@@ -224,10 +228,9 @@ resource "aws_alb" "alb" {
 }
 
 resource "aws_route53_record" "dns_records" {
-  name = count.index == 0 ? var.app_name : "${var.app_name}2"
+  name = var.app_name
   type = "CNAME"
   ttl = "300"
   zone_id = var.route53_zone_id
-  records = [aws_alb.alb[count.index].dns_name]
-  count = 2
+  records = [aws_alb.alb.dns_name]
 }

@@ -9,3 +9,7 @@ output "cluster" {
 output "fs" {
   value = aws_efs_file_system.efs
 }
+
+output "alb" {
+  value = aws_alb.alb
+}
