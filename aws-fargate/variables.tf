@@ -63,11 +63,15 @@ variable "efs_transition_to_ia" {
 }
 
 variable "route53_zone_id" {
-  type = string
+  type    = string
   default = "Z0336293PW1VCW37F5HY"
+}
+
+data "aws_route53_zone" "route53_hosted_zone" {
+  zone_id = var.route53_zone_id
+  vpc_id  = var.vpc_id
 }
 
 data "aws_subnet_ids" "subnet_ids" {
   vpc_id = var.vpc_id
 }
-
