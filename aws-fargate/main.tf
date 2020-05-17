@@ -50,10 +50,58 @@ resource "aws_security_group" "sg" {
     to_port     = 0
   }
   ingress {
-    from_port   = 0
-    protocol    = "-1"
+    from_port   = 53
+    protocol    = "udp"
     cidr_blocks = ["0.0.0.0/0"]
-    to_port     = 0
+    to_port     = 53
+  }
+  ingress {
+    from_port   = 53
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    to_port     = 53
+  }
+  ingress {
+    from_port   = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    to_port     = 80
+  }
+  ingress {
+    from_port   = 8080
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    to_port     = 8080
+  }
+  ingress {
+    from_port   = 50000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    to_port     = 50000
+  }
+  ingress {
+    from_port   = 111
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    to_port     = 111
+  }
+  ingress {
+    from_port   = 2049
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    to_port     = 2049
+  }
+  ingress {
+    from_port   = 111
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+    to_port     = 111
+  }
+  ingress {
+    from_port   = 2049
+    protocol    = "udp"
+    cidr_blocks = ["0.0.0.0/0"]
+    to_port     = 2049
   }
   revoke_rules_on_delete = true
   tags = {
