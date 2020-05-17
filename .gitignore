@@ -6,3 +6,4 @@
 /ami.json
 /ami-simple-simple.json
 **/.terraform
+/*/.terraform.tfstate.lock.info

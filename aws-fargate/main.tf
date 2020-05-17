@@ -18,7 +18,7 @@ resource "aws_ecs_cluster" "cluster" {
 
 resource "aws_efs_file_system" "efs" {
   lifecycle {
-    prevent_destroy = false
+    prevent_destroy = true
   }
   encrypted = var.task_efs_encrypted
   lifecycle_policy {
@@ -167,7 +167,7 @@ resource "aws_ecs_service" "service" {
 
 resource "aws_alb_target_group" "alb_target" {
   name     = "${var.app_name}-target-group-${count.index}"
-  port     = count.index == 0 ? 8080 : 50000
+  port     = [80, 50000][count.index]
   protocol = "HTTP"
   vpc_id   = var.vpc_id
   stickiness {
@@ -178,7 +178,7 @@ resource "aws_alb_target_group" "alb_target" {
     enabled             = true
     interval            = 30
     path                = "/"
-    port                = "8080"
+    port                = "${[80, 50000][count.index]}"
     healthy_threshold   = 3
     matcher             = "200-299,403"
     unhealthy_threshold = 3
@@ -195,7 +195,7 @@ resource "aws_alb_target_group" "alb_target" {
 
 resource "aws_lb_listener" "listener" {
   load_balancer_arn = aws_alb.alb.arn
-  port              = count.index == 0 ? 8080 : 50000
+  port              = count.index == 0 ? 80 : 50000
   protocol          = "HTTP"
   default_action {
     type             = "forward"
