@@ -1,6 +1,6 @@
 variable "app_name" {
   type    = string
-  default = "testapp12345"
+  default = "jenkins"
 }
 
 variable "env" {
@@ -33,11 +33,6 @@ variable "vpc_id" {
   default = "vpc-96542efe"
 }
 
-variable "subnets" {
-  type    = list(string)
-  default = ["subnet-93a129e9", "subnet-ef8bc786"]
-}
-
 variable "task_port_mappings" {
   type = list(map(number))
   default = [
@@ -65,13 +60,4 @@ variable "efs_transition_to_ia" {
 variable "route53_zone_id" {
   type    = string
   default = "Z0336293PW1VCW37F5HY"
-}
-
-data "aws_route53_zone" "route53_hosted_zone" {
-  zone_id = var.route53_zone_id
-  vpc_id  = var.vpc_id
-}
-
-data "aws_subnet_ids" "subnet_ids" {
-  vpc_id = var.vpc_id
 }
