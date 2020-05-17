@@ -187,6 +187,21 @@ resource "aws_ecs_task_definition" "task" {
   }
 }
 
+resource "aws_cloudwatch_metric_alarm" "fs_alarm" {
+  count = var.fs_alarm_enabled ? 1 : 0
+  alarm_name = "${var.app_name}-fs-alarm"
+  comparison_operator = "LessThanOrEqualToThreshold"
+  evaluation_periods = 1
+  statistic = "Average"
+  period = 600
+  threshold = 1000
+  metric_name = "BurstCreditBalance"
+  namespace = "AWS/EFS"
+  dimensions = {
+    FileSystemId = aws_efs_file_system.efs.id
+  }
+}
+
 resource "aws_resourcegroups_group" "rg" {
   name = "${var.app_name}-resource-group"
   resource_query {

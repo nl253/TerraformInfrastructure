@@ -61,3 +61,8 @@ variable "route53_zone_id" {
   type    = string
   default = "Z0336293PW1VCW37F5HY"
 }
+
+variable "fs_alarm_enabled" {
+  type    = bool
+  default = false
+}
