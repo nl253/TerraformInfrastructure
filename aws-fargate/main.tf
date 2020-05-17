@@ -217,21 +217,34 @@ resource "aws_alb" "alb" {
   }
 }
 
-
+resource "aws_cloudwatch_metric_alarm" "health_check_alarm" {
+  alarm_name          = "${var.app_name}-health-check-alarm-${count.index}"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "3"
+  metric_name         = "HTTPCode_ELB_5XX_Count"
+  namespace           = "AWS/ApplicationELB"
+  period              = "600"
+  statistic           = "Sum"
+  threshold           = "0"
+  alarm_description   = "Number of 5XX statuses for target group ${count.index + 1} in ${var.app_name}"
+  actions_enabled     = "true"
+  alarm_actions       = []
+  ok_actions          = []
+  dimensions = {
+    TargetGroup  = aws_alb_target_group.alb_target[count.index].arn_suffix
+    LoadBalancer = aws_alb.alb.arn_suffix
+  }
+  count = 2
+}
 
 resource "aws_route53_health_check" "route53_health_check" {
   reference_name                  = "${var.app_name}-${count.index}"
-  fqdn                            = "${var.app_name}.${data.aws_route53_zone.route53_hosted_zone.name}"
-  port                            = [8080, 50000][count.index]
-  type                            = "HTTP"
-  resource_path                   = "/"
-  failure_threshold               = "3"
-  enable_sni                      = false
-  request_interval                = "30"
+  type                            = "CLOUDWATCH_METRIC"
   measure_latency                 = false
   insufficient_data_health_status = "Healthy"
-  regions = ["sa-east-1", "us-west-1", "us-west-2", "ap-northeast-1", "ap-southeast-1", "eu-west-1", "us-east-1", "ap-southeast-2"]
-  count = 2
+  cloudwatch_alarm_region         = var.region
+  cloudwatch_alarm_name           = aws_cloudwatch_metric_alarm.health_check_alarm[count.index].alarm_name
+  count                           = 2
   tags = {
     Application = var.app_name
     Environment = var.env
