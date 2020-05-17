@@ -11,7 +11,7 @@ output "cluster" {
 }
 
 output "fs" {
-  value = aws_efs_file_system.efs
+  value = data.aws_efs_file_system.efs
 }
 
 output "alb" {
@@ -28,6 +28,10 @@ output "dns_record" {
 
 output "health_check" {
   value = aws_route53_health_check.route53_health_check
+}
+
+output "health_check_dns" {
+  value = aws_route53_health_check.route53_health_check-dns
 }
 
 output "role" {

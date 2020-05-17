@@ -16,7 +16,7 @@ resource "aws_ecs_cluster" "cluster" {
   }
 }
 
-resource "aws_efs_file_system" "efs" {
+/*resource "data.aws_efs_file_system" "efs" {
   lifecycle {
     prevent_destroy = true
   }
@@ -28,10 +28,10 @@ resource "aws_efs_file_system" "efs" {
     Application = var.app_name
     Environment = var.env
   }
-}
+}*/
 
 resource "aws_efs_mount_target" "mount_target" {
-  file_system_id  = aws_efs_file_system.efs.id
+  file_system_id  = data.aws_efs_file_system.efs.id
   subnet_id       = tolist(data.aws_subnet_ids.subnet_ids.ids)[count.index]
   security_groups = [aws_security_group.sg.id]
   count           = length(tolist(data.aws_subnet_ids.subnet_ids.ids))
@@ -177,7 +177,7 @@ resource "aws_ecs_task_definition" "task" {
   volume {
     name = "${var.app_name}-storage"
     efs_volume_configuration {
-      file_system_id = aws_efs_file_system.efs.id
+      file_system_id = data.aws_efs_file_system.efs.id
       root_directory = "/"
     }
   }
@@ -188,17 +188,21 @@ resource "aws_ecs_task_definition" "task" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "fs_alarm" {
-  count = var.fs_alarm_enabled ? 1 : 0
-  alarm_name = "${var.app_name}-fs-alarm"
+  count               = var.fs_alarm_enabled ? 1 : 0
+  alarm_name          = "${var.app_name}-fs-alarm"
   comparison_operator = "LessThanOrEqualToThreshold"
-  evaluation_periods = 1
-  statistic = "Average"
-  period = 600
-  threshold = 1000
-  metric_name = "BurstCreditBalance"
-  namespace = "AWS/EFS"
+  evaluation_periods  = 1
+  statistic           = "Average"
+  period              = 600
+  threshold           = 1000
+  metric_name         = "BurstCreditBalance"
+  namespace           = "AWS/EFS"
   dimensions = {
-    FileSystemId = aws_efs_file_system.efs.id
+    FileSystemId = data.aws_efs_file_system.efs.id
+  }
+  tags = {
+    Application = var.app_name
+    Environment = var.env
   }
 }
 
@@ -209,7 +213,7 @@ resource "aws_resourcegroups_group" "rg" {
       ResourceTypeFilters = ["AWS::AllSupported"]
       TagFilters = [
         {
-          Key = "Application"
+          Key    = "Application"
           Values = [var.app_name]
         }
       ]
@@ -317,6 +321,10 @@ resource "aws_cloudwatch_metric_alarm" "health_check_alarm" {
     LoadBalancer = aws_alb.alb.arn_suffix
   }
   count = 2
+  tags = {
+    Application = var.app_name
+    Environment = var.env
+  }
 }
 
 resource "aws_route53_health_check" "route53_health_check" {
@@ -328,6 +336,24 @@ resource "aws_route53_health_check" "route53_health_check" {
   cloudwatch_alarm_name           = aws_cloudwatch_metric_alarm.health_check_alarm[count.index].alarm_name
   count                           = 2
   tags = {
+    Name        = "Health Check ${var.app_name} ALB ${count.index + 1}"
+    Application = var.app_name
+    Environment = var.env
+  }
+}
+
+resource "aws_route53_health_check" "route53_health_check-dns" {
+  port              = [80, 50000][count.index]
+  fqdn              = "${var.app_name}.${substr(data.aws_route53_zone.route53_hosted_zone.name, 0, length(data.aws_route53_zone.route53_hosted_zone.name) - 1)}"
+  type              = "HTTP"
+  reference_name    = "${var.app_name}-dns"
+  measure_latency   = true
+  resource_path     = "/"
+  failure_threshold = "5"
+  request_interval  = "30"
+  count             = 2
+  tags = {
+    Name        = "Health Check ${var.app_name} ${count.index + 1}"
     Application = var.app_name
     Environment = var.env
   }

@@ -1,31 +1,53 @@
 #!/usr/bin/python3
-
-from pathlib import Path
-from subprocess import run, PIPE
-from typing import Iterator
+from concurrent.futures import ProcessPoolExecutor as Pool, Future
 from os import chdir
-from os.path import dirname, abspath
+from os.path import dirname, abspath, relpath
+from pathlib import Path
+from subprocess import run, PIPE, DEVNULL, CompletedProcess
+from sys import stderr
+from typing import Iterator, List
 
-ROOT = dirname(abspath(__file__))
 
-chdir(ROOT)
+def task(script: str) -> CompletedProcess:
+    chdir(dirname(script))
+    print(run(['terraform', 'init'], stderr=PIPE, stdout=DEVNULL).stderr.decode('utf-8'), end='')
+    return run(
+        (["python3"] if script.endswith('py') else ['bash', '-c']) + [script],
+        stdout=PIPE,
+        stderr=PIPE
+    )
 
 
-def find_test_files(ext: str) -> Iterator[str]:
+def find_tests(ext: str) -> Iterator[str]:
     return map(str, filter(lambda p: p.is_file(), map(lambda p: p.resolve(), Path('.').glob(f'./*/test.{ext}'))))
 
 
-tests = list(find_test_files('sh')) + \
-        list(find_test_files('py'))
+chdir(dirname(abspath(__file__)))
 
-print(f'collected tests {tests}')
+tests: List[str] = list(find_tests('sh')) + \
+                   list(find_tests('py'))
 
-for script in tests:
-    chdir(dirname(script))
-    print('initialising terraform')
-    print(run(['terraform', 'init'], stderr=PIPE).stderr.decode('utf-8'))
-    print(f"running tests in {script}")
-    process = run(["python3", script] if script.endswith('py') else ['bash', '-c', script], stdout=PIPE)
-    output = process.stdout.decode('utf-8')
-    print(f'output from {script}:')
-    print(output)
+tasks: List[Future] = []
+
+failures = 0
+
+print(f'collected {len(tests)} tests')
+
+with Pool(min(4, len(tests))) as p:
+    for idx, t in enumerate(tests):
+        print(f'#{idx} running tests in {relpath(t)}')
+        tasks.append(p.submit(task, t))
+
+for idx, task in enumerate(tasks):
+    t: str = tests[idx]
+    print(f"#{idx} test results from {relpath(t)}")
+    process: CompletedProcess = task.result()
+    if process.returncode > 0:
+        failures += 1
+        print(f'ERROR failed test in {t} - {process.stderr.decode("utf-8")}', file=stderr)
+    else:
+        print(f'output from {t}:')
+        print(process.stdout.decode('utf-8'))
+
+if failures > 0:
+    raise Exception(f'ERROR {failures}/{len(tests)} tests failed')
