@@ -187,6 +187,25 @@ resource "aws_ecs_task_definition" "task" {
   }
 }
 
+resource "aws_resourcegroups_group" "rg" {
+  name = "${var.app_name}-resource-group"
+  resource_query {
+    query = jsonencode({
+      ResourceTypeFilters = ["AWS::AllSupported"]
+      TagFilters = [
+        {
+          Key = "Application"
+          Values = [var.app_name]
+        }
+      ]
+    })
+  }
+  tags = {
+    Application = var.app_name
+    Environment = var.env
+  }
+}
+
 resource "aws_ecs_service" "service" {
   depends_on                        = [aws_security_group.sg, aws_alb.alb, aws_alb_target_group.alb_target, aws_lb_listener.listener]
   name                              = "${var.app_name}-service"
@@ -195,7 +214,7 @@ resource "aws_ecs_service" "service" {
   platform_version                  = "1.4.0"
   desired_count                     = length(tolist(data.aws_subnet_ids.subnet_ids.ids))
   launch_type                       = "FARGATE"
-  health_check_grace_period_seconds = 300
+  health_check_grace_period_seconds = 120
   network_configuration {
     subnets          = tolist(data.aws_subnet_ids.subnet_ids.ids)
     security_groups  = [aws_security_group.sg.id]
@@ -215,7 +234,7 @@ resource "aws_ecs_service" "service" {
 
 resource "aws_alb_target_group" "alb_target" {
   name     = "${var.app_name}-target-group-${count.index}"
-  port     = [80, 50000][count.index]
+  port     = [8080, 50000][count.index]
   protocol = "HTTP"
   vpc_id   = var.vpc_id
   stickiness {
@@ -226,7 +245,7 @@ resource "aws_alb_target_group" "alb_target" {
     enabled             = true
     interval            = 30
     path                = "/"
-    port                = "${[80, 50000][count.index]}"
+    port                = "${[8080, 50000][count.index]}"
     healthy_threshold   = 3
     matcher             = "200-299,403"
     unhealthy_threshold = 3
@@ -243,7 +262,7 @@ resource "aws_alb_target_group" "alb_target" {
 
 resource "aws_lb_listener" "listener" {
   load_balancer_arn = aws_alb.alb.arn
-  port              = count.index == 0 ? 80 : 50000
+  port              = [80, 50000][count.index]
   protocol          = "HTTP"
   default_action {
     type             = "forward"
