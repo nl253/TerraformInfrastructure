@@ -7,7 +7,7 @@ terraform {
   backend "s3" {
     region = "eu-west-2"
     bucket = "codebuild-nl"
-    key = "iam-role/terraform.tfstate"
+    key = "jenkins/terraform.tfstate"
   }
 }
 
