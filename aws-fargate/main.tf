@@ -3,6 +3,14 @@ provider "aws" {
   region  = "eu-west-2"
 }
 
+terraform {
+  backend "s3" {
+    region = "eu-west-2"
+    bucket = "codebuild-nl"
+    key = "iam-role/terraform.tfstate"
+  }
+}
+
 resource "aws_ecs_cluster" "cluster" {
   name               = "${var.app_name}-cluster"
   capacity_providers = ["FARGATE"]
@@ -15,20 +23,6 @@ resource "aws_ecs_cluster" "cluster" {
     Environment = var.env
   }
 }
-
-/*resource "data.aws_efs_file_system" "efs" {
-  lifecycle {
-    prevent_destroy = true
-  }
-  encrypted = var.task_efs_encrypted
-  lifecycle_policy {
-    transition_to_ia = var.efs_transition_to_ia
-  }
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
-}*/
 
 resource "aws_efs_mount_target" "mount_target" {
   file_system_id  = data.aws_efs_file_system.efs.id

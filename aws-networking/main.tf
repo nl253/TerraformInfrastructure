@@ -3,6 +3,14 @@ provider "aws" {
   profile = "ma"
 }
 
+terraform {
+  backend "s3" {
+    bucket = "codebuild-nl"
+    key = "example-networking/terraform.tfstate"
+    region = "eu-west-2"
+  }
+}
+
 resource "aws_internet_gateway" "ig" {
   vpc_id = aws_vpc.vpc.id
   tags = {

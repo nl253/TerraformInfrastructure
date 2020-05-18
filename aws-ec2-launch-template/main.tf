@@ -3,6 +3,14 @@ provider "aws" {
   profile = "ma"
 }
 
+terraform {
+  backend "s3" {
+    bucket = "codebuild-nl"
+    key = "example-ec2-launch-template/terraform.tfstate"
+    region = "eu-west-2"
+  }
+}
+
 resource "aws_launch_template" "spot_fleet_fleet_launch_template" {
   vpc_security_group_ids  = [aws_security_group.instance_sg.id]
   image_id                = var.ec2_image_id

@@ -3,6 +3,14 @@ provider "aws" {
   region  = "eu-west-2"
 }
 
+terraform {
+  backend "s3" {
+    bucket = "codebuild-nl"
+    key = "example-cloudwatch-alarm/terraform.tfstate"
+    region = "eu-west-2"
+  }
+}
+
 resource "aws_cloudwatch_metric_alarm" "alarm" {
   alarm_name                = "${var.app_name}-alarm"
   alarm_description         = "${var.metric} in  ${var.app_name} (${var.env}) has exceeded ${var.threshold}"

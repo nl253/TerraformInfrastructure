@@ -3,6 +3,14 @@ provider "aws" {
   profile = "ma"
 }
 
+terraform {
+  backend "s3" {
+    bucket = "codebuild-nl"
+    key = "example-s3/terraform.tfstate"
+    region = "eu-west-2"
+  }
+}
+
 data "aws_caller_identity" "id" {}
 
 resource "aws_s3_bucket" "bucket" {
