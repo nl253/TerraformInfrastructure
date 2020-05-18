@@ -5,6 +5,14 @@ provider "azurerm" {
   features {}
 }
 
+terraform {
+  backend "s3" {
+    bucket = "codebuild-nl"
+    key = "example-func-app/terraform.tfstate"
+    region = "eu-west-2"
+  }
+}
+
 resource "azurerm_resource_group" "rg" {
   name     = "${var.app_name}-resource-group"
   location = var.region
