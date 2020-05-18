@@ -5,7 +5,7 @@ resource "aws_subnet" "subnet_private" {
   map_public_ip_on_launch         = false
   assign_ipv6_address_on_creation = false
   tags = {
-    APP = var.app_name
+    Application = var.app_name
   }
 }
 
@@ -29,7 +29,7 @@ resource "aws_network_acl" "private_nacl" {
     to_port    = 0
   }
   tags = {
-    APP = var.app_name
+    Application = var.app_name
   }
 }
 
@@ -40,7 +40,7 @@ resource "aws_route_table" "route_table_private" {
     nat_gateway_id = aws_nat_gateway.nat.id
   }
   tags = {
-    APP = var.app_name
+    Application = var.app_name
   }
 }
 
@@ -65,6 +65,6 @@ resource "aws_security_group" "private_sg" {
     to_port   = 0
   }
   tags = {
-    APP = var.app_name
+    Application = var.app_name
   }
 }

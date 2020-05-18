@@ -5,7 +5,7 @@ resource "aws_subnet" "subnet_public" {
   map_public_ip_on_launch         = true
   assign_ipv6_address_on_creation = false
   tags = {
-    APP = var.app_name
+    Application = var.app_name
   }
 }
 
@@ -29,7 +29,7 @@ resource "aws_network_acl" "public_nacl" {
     to_port    = 0
   }
   tags = {
-    APP = var.app_name
+    Application = var.app_name
   }
 }
 
@@ -40,7 +40,7 @@ resource "aws_route_table" "route_table_public" {
     gateway_id = aws_internet_gateway.ig.id
   }
   tags = {
-    APP = var.app_name
+    Application = var.app_name
   }
 }
 
@@ -64,6 +64,6 @@ resource "aws_security_group" "public_sg" {
     to_port   = 0
   }
   tags = {
-    APP = var.app_name
+    Application = var.app_name
   }
 }
