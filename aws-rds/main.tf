@@ -3,6 +3,14 @@ provider "aws" {
   profile = "ma"
 }
 
+terraform {
+  backend "s3" {
+    bucket = "codebuild-nl"
+    key = "example-rds/terraform.tfstate"
+    region = "eu-west-2"
+  }
+}
+
 resource "aws_db_instance" "db" {
   allocated_storage                   = var.db_storage
   skip_final_snapshot                 = true
