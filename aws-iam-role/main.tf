@@ -3,6 +3,14 @@ provider "aws" {
   region  = "eu-west-2"
 }
 
+terraform {
+  backend "s3" {
+    region = "eu-west-2"
+    bucket = "codebuild-nl"
+    key = "iam-role/terraform.tfstate"
+  }
+}
+
 resource "aws_iam_role" "role" {
   name                  = var.name
   path                  = var.path
@@ -12,12 +20,12 @@ resource "aws_iam_role" "role" {
     APP = var.app_name
   }
   assume_role_policy = jsonencode({
-    Version = "2012-10-17",
+    Version = "2012-10-17"
     Statement = [
       {
-        Action    = "sts:AssumeRole",
+        Action    = "sts:AssumeRole"
         Principal = var.principal
-        Effect : "Allow"
+        Effect = "Allow"
       }
     ]
   })
@@ -25,11 +33,11 @@ resource "aws_iam_role" "role" {
 
 resource "aws_iam_policy" "policy" {
   policy = jsonencode({
-    Version = "2012-10-17",
+    Version = "2012-10-17"
     Statement = [
       {
-        Action   = var.action,
-        Resource = var.resource,
+        Action   = var.action
+        Resource = var.resource
         Effect   = "Allow"
       }
     ]
