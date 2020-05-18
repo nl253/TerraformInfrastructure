@@ -11,9 +11,18 @@ terraform {
   }
 }
 
+data "aws_s3_bucket" "bucket_logs" {
+  bucket = "logs-nl"
+}
+
 resource "aws_s3_bucket" "bucket" {
   lifecycle {
     prevent_destroy = true
+  }
+  region = "eu-west-2"
+  logging {
+    target_bucket = data.aws_s3_bucket.bucket_logs.bucket
+    target_prefix = "s3/ci-bucket"
   }
   bucket = "codebuild-nl"
   lifecycle_rule {
@@ -34,15 +43,14 @@ resource "aws_s3_bucket" "bucket" {
     }
   }
   versioning {
-    enabled = false
+    enabled = true
     mfa_delete = false
   }
-
-  /*server_side_encryption_configuration {
+  server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {
-        sse_algorithm = "aes256"
+        sse_algorithm = "AES256"
       }
     }
-  }*/
+  }
 }
