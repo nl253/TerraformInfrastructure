@@ -43,3 +43,9 @@ resource "aws_nat_gateway" "nat" {
     Application = var.app_name
   }
 }
+
+module "rg" {
+  source = "../aws-resource-group"
+  app_name = var.app_name
+  env = var.env
+}

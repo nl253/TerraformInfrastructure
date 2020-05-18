@@ -54,3 +54,9 @@ resource "aws_s3_bucket" "bucket" {
     }
   }
 }
+
+module "rg" {
+  source = "../aws-resource-group"
+  app_name = var.app_name
+  env = var.env
+}

@@ -57,3 +57,9 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
     ]
   })
 }
+
+module "rg" {
+  source = "../aws-resource-group"
+  app_name = var.app_name
+  env = var.env
+}

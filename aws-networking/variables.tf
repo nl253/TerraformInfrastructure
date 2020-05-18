@@ -3,6 +3,11 @@ variable "app_name" {
   default = "TestApp"
 }
 
+variable "env" {
+  type    = string
+  default = "dev"
+}
+
 variable "az" {
   type    = string
   default = "eu-west-2a"

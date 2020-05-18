@@ -31,3 +31,9 @@ resource "aws_cloudwatch_metric_alarm" "alarm" {
     Environment = var.env
   }
 }
+
+module "rg" {
+  source = "../aws-resource-group"
+  app_name = var.app_name
+  env = var.env
+}

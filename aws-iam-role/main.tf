@@ -48,3 +48,9 @@ resource "aws_iam_role_policy_attachment" "attachment" {
   policy_arn = aws_iam_policy.policy.arn
   role       = aws_iam_role.role.name
 }
+
+module "rg" {
+  source = "../aws-resource-group"
+  app_name = var.app_name
+  env = var.env
+}

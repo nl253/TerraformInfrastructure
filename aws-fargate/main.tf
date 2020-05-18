@@ -200,23 +200,10 @@ resource "aws_cloudwatch_metric_alarm" "fs_alarm" {
   }
 }
 
-resource "aws_resourcegroups_group" "rg" {
-  name = "${var.app_name}-resource-group"
-  resource_query {
-    query = jsonencode({
-      ResourceTypeFilters = ["AWS::AllSupported"]
-      TagFilters = [
-        {
-          Key    = "Application"
-          Values = [var.app_name]
-        }
-      ]
-    })
-  }
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+module "rg" {
+  source = "../aws-resource-group"
+  app_name = var.app_name
+  env = var.env
 }
 
 resource "aws_ecs_service" "service" {
