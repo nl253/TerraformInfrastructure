@@ -6,7 +6,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket = "codebuild-nl"
-    key = "ci-bucket/terraform.tfstate"
+    key = "ci-bucket"
     region = "eu-west-2"
   }
 }
