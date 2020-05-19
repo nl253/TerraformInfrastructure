@@ -37,7 +37,3 @@ output "health_check_dns" {
 output "role" {
   value = aws_iam_role.task_role
 }
-
-output "rg" {
-  value = aws_resourcegroups_group.rg
-}
