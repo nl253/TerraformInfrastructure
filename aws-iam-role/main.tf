@@ -18,6 +18,7 @@ resource "aws_iam_role" "role" {
   max_session_duration  = var.sessions_duration_secs
   tags = {
     Application = var.app_name
+    Environment = var.env
   }
   assume_role_policy = jsonencode({
     Version = "2012-10-17"

@@ -15,6 +15,7 @@ resource "aws_internet_gateway" "ig" {
   vpc_id = aws_vpc.vpc.id
   tags = {
     Application = var.app_name
+    Environment = var.env
   }
 }
 
@@ -24,6 +25,7 @@ resource "aws_vpc" "vpc" {
   enable_dns_hostnames             = false
   tags = {
     Application = var.app_name
+    Environment = var.env
   }
 }
 
@@ -32,6 +34,7 @@ resource "aws_eip" "ip" {
   vpc        = true
   tags = {
     Application = var.app_name
+    Environment = var.env
   }
 }
 
@@ -41,6 +44,7 @@ resource "aws_nat_gateway" "nat" {
   allocation_id = aws_eip.ip.id
   tags = {
     Application = var.app_name
+    Environment = var.env
   }
 }
 

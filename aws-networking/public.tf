@@ -6,6 +6,7 @@ resource "aws_subnet" "subnet_public" {
   assign_ipv6_address_on_creation = false
   tags = {
     Application = var.app_name
+    Environment = var.env
   }
 }
 
@@ -30,6 +31,7 @@ resource "aws_network_acl" "public_nacl" {
   }
   tags = {
     Application = var.app_name
+    Environment = var.env
   }
 }
 
@@ -41,6 +43,7 @@ resource "aws_route_table" "route_table_public" {
   }
   tags = {
     Application = var.app_name
+    Environment = var.env
   }
 }
 
@@ -65,5 +68,6 @@ resource "aws_security_group" "public_sg" {
   }
   tags = {
     Application = var.app_name
+    Environment = var.env
   }
 }
