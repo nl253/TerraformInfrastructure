@@ -13,6 +13,12 @@ variable "principal" {
   description = "The one that will use the role."
 }
 
+variable "policies" {
+  type        = list(string)
+  description = "Managed policies to attach to role."
+  default = []
+}
+
 variable "name" {
   type        = string
   description = "The name of this new role."

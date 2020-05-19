@@ -32,6 +32,7 @@ resource "aws_iam_role" "role" {
 }
 
 resource "aws_iam_policy" "policy" {
+  count = length(var.policies) == 0 ? 1 : 0
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -45,7 +46,8 @@ resource "aws_iam_policy" "policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "attachment" {
-  policy_arn = aws_iam_policy.policy.arn
+  count = length(var.policies) == 0 ? 1 : length(var.policies)
+  policy_arn = length(var.policies) == 0 ? aws_iam_policy.policy[0].arn : var.policies[count.index]
   role       = aws_iam_role.role.name
 }
 
