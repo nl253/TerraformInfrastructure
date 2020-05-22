@@ -2,6 +2,13 @@ provider "google" {
   project = "test-project-277710"
 }
 
+terraform {
+  backend "gcs" {
+    bucket = "ci-nl"
+    prefix = "instance-templates/template"
+  }
+}
+
 resource "google_compute_instance_template" "template" {
   machine_type   = var.machine_type
   tags           = var.tags
