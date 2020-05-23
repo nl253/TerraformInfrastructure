@@ -1,4 +1,4 @@
-provider "google" {
+provider "google-beta" {
   project = "test-project-277710"
 }
 
@@ -14,22 +14,26 @@ resource "google_service_account" "service_account" {
   display_name = var.name
 }
 
-data "google_iam_policy" "policy" {
-  binding {
-    members = [
-      "serviceAccount:${google_service_account.service_account.email}"
-    ]
-    role = var.roles[count.index]
-  }
-  audit_config {
-    service = "allServices"
-    audit_log_configs {
-      log_type = "DATA_WRITE"
-    }
-    audit_log_configs {
-      log_type = "ADMIN_READ"
-    }
-  }
+//data "google_iam_policy" "policy" {
+//  audit_config {
+//    service = "allServices"
+//    audit_log_configs {
+//      log_type = "DATA_WRITE"
+//    }
+//    audit_log_configs {
+//      log_type = "ADMIN_READ"
+//    }
+//  }
+//  count = length(var.roles)
+//}
+
+
+resource "google_project_iam_binding" "binding" {
+  members = [
+    "serviceAccount:${google_service_account.service_account.email}"
+  ]
+  role = var.roles[count.index]
   count = length(var.roles)
+  project = var.project
 }
 
