@@ -1,6 +1,7 @@
 variable "action" {
   type        = any
   description = "Actions that the principal will do."
+  default = null
 }
 
 variable "resource" {

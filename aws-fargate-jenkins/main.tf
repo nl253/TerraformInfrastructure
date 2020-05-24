@@ -23,7 +23,6 @@ resource "aws_cloudwatch_log_group" "logs" {
 
 module "task_role" {
   source   = "../aws-iam-role"
-  action   = "Allow"
   env      = var.env
   app_name = var.app_name
   name     = "${var.app_name}-task-role"
