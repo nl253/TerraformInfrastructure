@@ -52,11 +52,6 @@ variable "region" {
   default = "eu-west-2"
 }
 
-variable "efs_transition_to_ia" {
-  type    = string
-  default = "AFTER_30_DAYS"
-}
-
 variable "route53_zone_id" {
   type    = string
   default = "Z0336293PW1VCW37F5HY"

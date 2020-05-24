@@ -51,9 +51,3 @@ resource "aws_iam_role_policy_attachment" "attachment" {
   policy_arn = length(var.policies) == 0 ? aws_iam_policy.policy[0].arn : var.policies[count.index]
   role       = aws_iam_role.role.name
 }
-
-module "rg" {
-  source = "../aws-resource-group"
-  app_name = var.app_name
-  env = var.env
-}

@@ -11,29 +11,21 @@ output "cluster" {
 }
 
 output "fs" {
-  value = data.aws_efs_file_system.efs
+  value = module.efs.efs
 }
 
 output "alb" {
-  value = aws_alb.alb
-}
-
-output "alarm" {
-  value = aws_cloudwatch_metric_alarm.health_check_alarm
+  value = module.alb
 }
 
 output "dns_record" {
   value = aws_route53_record.dns_records
 }
 
-output "health_check" {
-  value = aws_route53_health_check.route53_health_check
-}
-
 output "health_check_dns" {
-  value = aws_route53_health_check.route53_health_check-dns
+  value = module.route53_health_check_dns.health_check
 }
 
 output "role" {
-  value = aws_iam_role.task_role
+  value = module.task_role
 }
