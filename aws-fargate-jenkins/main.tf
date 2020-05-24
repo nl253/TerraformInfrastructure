@@ -32,73 +32,44 @@ module "task_role" {
   policies = ["arn:aws:iam::aws:policy/AmazonElasticFileSystemClientFullAccess"]
 }
 
-resource "aws_security_group" "sg" {
-  name = "${var.app_name}-security-group"
-  egress {
-    from_port   = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-    to_port     = 0
-  }
-  ingress {
-    from_port   = 53
-    protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]
-    to_port     = 53
-  }
-  ingress {
-    from_port   = 53
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    to_port     = 53
-  }
-  ingress {
-    from_port   = 80
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    to_port     = 80
-  }
-  ingress {
-    from_port   = 8080
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    to_port     = 8080
-  }
-  ingress {
-    from_port   = 50000
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    to_port     = 50000
-  }
-  ingress {
-    from_port   = 111
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    to_port     = 111
-  }
-  ingress {
-    from_port   = 2049
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    to_port     = 2049
-  }
-  ingress {
-    from_port   = 111
-    protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]
-    to_port     = 111
-  }
-  ingress {
-    from_port   = 2049
-    protocol    = "udp"
-    cidr_blocks = ["0.0.0.0/0"]
-    to_port     = 2049
-  }
-  revoke_rules_on_delete = true
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+module "security_group" {
+  source = "../aws-security-group"
+  app_name = var.app_name
+  env = var.env
+  self = true
+  rules = [
+    {
+      type = "ingress"
+      protocol = "tcp"
+      port = 80
+      cidr = "0.0.0.0/0"
+    },
+    {
+      type = "ingress"
+      protocol = "tcp"
+      port = 8080
+      cidr = "0.0.0.0/0"
+    },
+    {
+      type = "ingress"
+      protocol = "tcp"
+      port = 50000
+      cidr = "0.0.0.0/0"
+    },
+    {
+      type = "ingress"
+      protocol = "tcp"
+      port = 111
+      cidr = "0.0.0.0/0"
+    },
+    {
+      type = "ingress"
+      protocol = "tcp"
+      port = 2049
+      cidr = "0.0.0.0/0"
+    }
+  ]
+  internet = true
 }
 
 module "efs" {
@@ -106,7 +77,7 @@ module "efs" {
   app_name          = var.app_name
   encrypted         = var.task_efs_encrypted
   env               = var.env
-  security_group_id = aws_security_group.sg.id
+  security_group_id = module.security_group.security_group.id
   subnet_ids        = data.aws_subnet_ids.subnet_ids.ids
   fs_alarm_enabled  = false
 }
@@ -118,12 +89,12 @@ module "alb" {
   ports             = [80, 50000]
   ports_targets     = [8080, 50000]
   region            = var.region
-  security_group_id = aws_security_group.sg.id
+  security_group_id = module.security_group.security_group.id
   subnet_ids        = tolist(data.aws_subnet_ids.subnet_ids.ids)
   vpc_id            = var.vpc_id
 }
 
-module "route53_health_check_dns" {
+module "route53_health_check" {
   source   = "../aws-route53-health-check"
   app_name = var.app_name
   env      = var.env

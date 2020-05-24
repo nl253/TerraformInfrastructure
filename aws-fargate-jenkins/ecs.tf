@@ -12,7 +12,7 @@ resource "aws_ecs_cluster" "cluster" {
 }
 
 resource "aws_ecs_service" "service" {
-  depends_on                        = [aws_security_group.sg, module.alb.alb, module.alb.target_groups, module.alb.listeners]
+  depends_on                        = [module.security_group.security_group, module.alb.alb, module.alb.target_groups, module.alb.listeners]
   name                              = "${var.app_name}-service"
   task_definition                   = aws_ecs_task_definition.task.arn
   cluster                           = aws_ecs_cluster.cluster.id
@@ -22,7 +22,7 @@ resource "aws_ecs_service" "service" {
   health_check_grace_period_seconds = 120
   network_configuration {
     subnets          = tolist(data.aws_subnet_ids.subnet_ids.ids)
-    security_groups  = [aws_security_group.sg.id]
+    security_groups  = [module.security_group.security_group.id]
     assign_public_ip = true
   }
   load_balancer {
@@ -38,7 +38,7 @@ resource "aws_ecs_service" "service" {
 }
 
 resource "aws_ecs_task_definition" "task" {
-  depends_on = [aws_security_group.sg]
+  depends_on = [module.security_group.security_group]
   container_definitions = jsonencode([
     {
       name         = "${var.app_name}-app"

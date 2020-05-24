@@ -23,7 +23,7 @@ output "dns_record" {
 }
 
 output "health_check_dns" {
-  value = module.route53_health_check_dns.health_check
+  value = module.route53_health_check.health_check
 }
 
 output "role" {
