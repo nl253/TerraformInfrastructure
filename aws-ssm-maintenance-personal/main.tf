@@ -12,7 +12,7 @@ terraform {
 }
 
 module "maintenance" {
-  source = "../aws-ssm-maintainance"
+  source = "../aws-ssm-maintenance"
   app_name = "ssm"
   env = "dev"
   commands = ["find -type f"]
