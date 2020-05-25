@@ -1,5 +1,5 @@
 pipeline {
-    agent alpine
+    agent { docker 'alpine:lts' }
     stages {
         stage('Build') {
             steps {
