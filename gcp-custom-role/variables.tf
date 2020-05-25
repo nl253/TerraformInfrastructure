@@ -1,13 +1,12 @@
 variable "name" {
-  default = "TestRole"
+  type = string
 }
 
 variable "permissions" {
-  default = ["storage.objects.list", "storage.buckets.list", "storage.objects.get"]
+  description = "E.g. ['storage.objects.list', 'storage.buckets.list', 'storage.objects.get']"
   type    = list(string)
 }
 
 variable "project" {
-  default = "test-project-277710"
+  type = string
 }
-
