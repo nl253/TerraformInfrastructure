@@ -42,3 +42,35 @@ variable "disk_type" {
   type    = string
   default = "pd-standard"
 }
+
+variable "subnetwork" {
+  default = "default"
+  type = string
+}
+
+variable "network" {
+  default = "default"
+  type = string
+}
+
+variable "disk_size" {
+  type = number
+  default = 10
+}
+
+variable "service_account" {
+  type = string
+  default = "223078289774-compute@developer.gserviceaccount.com"
+}
+
+variable "service_account_scopes" {
+  type = list(string)
+  default = [
+      "https://www.googleapis.com/auth/devstorage.read_only",
+      "https://www.googleapis.com/auth/logging.write",
+      "https://www.googleapis.com/auth/monitoring.write",
+      "https://www.googleapis.com/auth/service.management.readonly",
+      "https://www.googleapis.com/auth/servicecontrol",
+      "https://www.googleapis.com/auth/trace.append"
+    ]
+}

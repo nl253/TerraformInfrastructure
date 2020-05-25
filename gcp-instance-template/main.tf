@@ -26,7 +26,7 @@ resource "google_compute_instance_template" "template" {
     boot         = true
     device_name  = var.name
     disk_name    = "${var.name}-disk"
-    disk_size_gb = 10
+    disk_size_gb = var.disk_size
     disk_type    = var.disk_type
     interface    = ""
     labels       = {}
@@ -49,8 +49,8 @@ resource "google_compute_instance_template" "template" {
   }
 
   network_interface {
-    network            = "https://www.googleapis.com/compute/v1/projects/${var.project}/global/networks/default"
-    subnetwork         = "https://www.googleapis.com/compute/v1/projects/${var.project}/regions/${var.region}/subnetworks/default"
+    network            = "https://www.googleapis.com/compute/v1/projects/${var.project}/global/networks/${var.network}"
+    subnetwork         = "https://www.googleapis.com/compute/v1/projects/${var.project}/regions/${var.region}/subnetworks/${var.subnetwork}"
     subnetwork_project = var.project
 
     access_config {
@@ -59,14 +59,7 @@ resource "google_compute_instance_template" "template" {
   }
 
   service_account {
-    email = "223078289774-compute@developer.gserviceaccount.com"
-    scopes = [
-      "https://www.googleapis.com/auth/devstorage.read_only",
-      "https://www.googleapis.com/auth/logging.write",
-      "https://www.googleapis.com/auth/monitoring.write",
-      "https://www.googleapis.com/auth/service.management.readonly",
-      "https://www.googleapis.com/auth/servicecontrol",
-      "https://www.googleapis.com/auth/trace.append"
-    ]
+    email = var.service_account
+    scopes = var.service_account_scopes
   }
 }
