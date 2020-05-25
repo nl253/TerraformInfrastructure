@@ -3,5 +3,5 @@ output "network" {
 }
 
 output "subnets" {
-  value = google_compute_subnetwork.subnet
+  value = google_compute_subnetwork.subnets
 }
