@@ -17,11 +17,11 @@ resource "aws_ecs_service" "service" {
   task_definition                   = aws_ecs_task_definition.task.arn
   cluster                           = aws_ecs_cluster.cluster.id
   platform_version                  = "1.4.0"
-  desired_count                     = length(tolist(data.aws_subnet_ids.subnet_ids.ids))
+  desired_count                     = 1
   launch_type                       = "FARGATE"
   health_check_grace_period_seconds = 120
   network_configuration {
-    subnets          = tolist(data.aws_subnet_ids.subnet_ids.ids)
+    subnets          = [tolist(data.aws_subnet_ids.subnet_ids.ids)[0]]
     security_groups  = [module.security_group.security_group.id]
     assign_public_ip = true
   }

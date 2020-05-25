@@ -78,7 +78,7 @@ module "efs" {
   encrypted         = var.task_efs_encrypted
   env               = var.env
   security_group_id = module.security_group.security_group.id
-  subnet_ids        = data.aws_subnet_ids.subnet_ids.ids
+  subnet_ids        = [tolist(data.aws_subnet_ids.subnet_ids.ids)[0]]
   fs_alarm_enabled  = false
 }
 
@@ -90,7 +90,7 @@ module "alb" {
   ports_targets     = [8080, 50000]
   region            = var.region
   security_group_id = module.security_group.security_group.id
-  subnet_ids        = tolist(data.aws_subnet_ids.subnet_ids.ids)
+  subnet_ids        = [tolist(data.aws_subnet_ids.subnet_ids.ids)[0], tolist(data.aws_subnet_ids.subnet_ids.ids)[1]]
   vpc_id            = var.vpc_id
 }
 

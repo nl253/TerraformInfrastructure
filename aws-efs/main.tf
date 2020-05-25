@@ -1,6 +1,6 @@
 resource "aws_efs_file_system" "efs" {
   lifecycle {
-    prevent_destroy = false
+    prevent_destroy = true
   }
   lifecycle_policy {
     transition_to_ia = "AFTER_30_DAYS"
