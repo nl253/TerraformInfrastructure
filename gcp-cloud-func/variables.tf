@@ -25,10 +25,10 @@ variable "memory" {
 
 variable "timeout" {
   default = 30
-  type = number
+  type    = number
 }
 
 variable "entry_point" {
   default = "hello_get"
-  type = string
+  type    = string
 }

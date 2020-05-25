@@ -6,7 +6,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket = "codebuild-nl"
-    key = "example-rds/terraform.tfstate"
+    key    = "example-rds/terraform.tfstate"
     region = "eu-west-2"
   }
 }
@@ -36,7 +36,7 @@ resource "aws_db_instance" "db" {
 }
 
 module "rg" {
-  source = "../aws-resource-group"
+  source   = "../aws-resource-group"
   app_name = var.app_name
-  env = var.env
+  env      = var.env
 }

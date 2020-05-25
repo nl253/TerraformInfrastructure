@@ -15,21 +15,21 @@ variable "ports" {
 }
 
 variable "path" {
-  type = string
+  type    = string
   default = "/"
 }
 
 variable "max_failures" {
-  type = number
+  type    = number
   default = 5
 }
 
 variable "request_interval" {
-  type = number
+  type    = number
   default = 30
 }
 
 variable "type" {
-  type = string
+  type    = string
   default = "HTTP"
 }

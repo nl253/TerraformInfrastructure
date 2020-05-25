@@ -12,9 +12,9 @@ terraform {
 }
 
 module "maintenance" {
-  source = "../aws-ssm-maintenance"
+  source   = "../aws-ssm-maintenance"
   app_name = "ssm"
-  env = "dev"
+  env      = "dev"
   commands = ["find -type f"]
   instance_ids = [
     "mi-018e8423e1e16af4d",

@@ -6,7 +6,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket = "codebuild-nl"
-    key = "example-ec2-launch-template/terraform.tfstate"
+    key    = "example-ec2-launch-template/terraform.tfstate"
     region = "eu-west-2"
   }
 }
@@ -77,14 +77,14 @@ resource "aws_autoscaling_group" "scaling_group" {
   desired_capacity = var.asg_desired_capacity
   enabled_metrics  = var.ec2_metrics
   tag {
-    key = "Environment"
+    key                 = "Environment"
     propagate_at_launch = false
-    value = var.env
+    value               = var.env
   }
   tag {
-    key = "Application"
+    key                 = "Application"
     propagate_at_launch = false
-    value = var.app_name
+    value               = var.app_name
   }
 }
 
@@ -160,7 +160,7 @@ resource "aws_lb" "load_balancer" {
 }
 
 module "rg" {
-  source = "../aws-resource-group"
+  source   = "../aws-resource-group"
   app_name = var.app_name
-  env = var.env
+  env      = var.env
 }

@@ -7,7 +7,7 @@ terraform {
   backend "s3" {
     region = "eu-west-2"
     bucket = "codebuild-nl"
-    key = "iam-role/terraform.tfstate"
+    key    = "iam-role/terraform.tfstate"
   }
 }
 
@@ -26,7 +26,7 @@ resource "aws_iam_role" "role" {
       {
         Action    = "sts:AssumeRole"
         Principal = var.principal
-        Effect = "Allow"
+        Effect    = "Allow"
       }
     ]
   })
@@ -47,7 +47,7 @@ resource "aws_iam_policy" "policy" {
 }
 
 resource "aws_iam_role_policy_attachment" "attachment" {
-  count = length(var.policies) == 0 ? 1 : length(var.policies)
+  count      = length(var.policies) == 0 ? 1 : length(var.policies)
   policy_arn = length(var.policies) == 0 ? aws_iam_policy.policy[0].arn : var.policies[count.index]
   role       = aws_iam_role.role.name
 }

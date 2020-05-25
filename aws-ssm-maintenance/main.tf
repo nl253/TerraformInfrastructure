@@ -53,15 +53,15 @@ data "aws_iam_role" "service_role" {
 resource "aws_ssm_maintenance_window_task" "tasks" {
   max_concurrency  = "2"
   max_errors       = "1"
-  name = "${aws_ssm_maintenance_window.window.name}-target-run-shell-script-command"
-  description = "Shell script command for targets in ${aws_ssm_maintenance_window.window.name}."
+  name             = "${aws_ssm_maintenance_window.window.name}-target-run-shell-script-command"
+  description      = "Shell script command for targets in ${aws_ssm_maintenance_window.window.name}."
   service_role_arn = data.aws_iam_role.service_role.arn
   priority         = 1
   task_arn         = "AWS-RunShellScript"
   task_type        = "RUN_COMMAND"
   task_invocation_parameters {
     run_command_parameters {
-      comment = var.comment
+      comment         = var.comment
       timeout_seconds = var.task_timeout
       parameter {
         name   = "executionTimeout"

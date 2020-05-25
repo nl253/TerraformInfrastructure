@@ -8,7 +8,7 @@ provider "azurerm" {
 terraform {
   backend "s3" {
     bucket = "codebuild-nl"
-    key = "example-func-app/terraform.tfstate"
+    key    = "example-func-app/terraform.tfstate"
     region = "eu-west-2"
   }
 }

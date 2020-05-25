@@ -1,26 +1,26 @@
 provider "aws" {
   profile = "ma"
-  region = "eu-west-2"
+  region  = "eu-west-2"
 }
 
 variable "runtime" {
-  type = string
+  type    = string
   default = "python3.8"
 }
 
 variable "lambda_name" {
-  type = string
+  type    = string
   default = "user_creation_lambda"
 }
 
 resource "aws_s3_bucket" "user_creation_lambda_bucket" {
-  bucket = "user-creation-lambda-bucket"
+  bucket        = "user-creation-lambda-bucket"
   force_destroy = true
 }
 
 resource "aws_s3_bucket_object" "user_creation_lambda_code" {
-  bucket = aws_s3_bucket.user_creation_lambda_bucket.bucket
-  key = "index.zip"
+  bucket         = aws_s3_bucket.user_creation_lambda_bucket.bucket
+  key            = "index.zip"
   content_base64 = filebase64("index.zip")
 }
 
@@ -37,7 +37,7 @@ output "user_creation_lambda_outputs_api_arn" {
 }
 
 resource "aws_iam_policy" "user_creation_lambda_role_policy" {
-  name = "user_creation_lambda_role_policy"
+  name   = "user_creation_lambda_role_policy"
   policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -53,13 +53,13 @@ EOF
 }
 
 resource "aws_iam_policy_attachment" "user_creation_lambda_role_policy_attachment" {
-  name = "user_creation_lambda_role_policy_attachment"
+  name       = "user_creation_lambda_role_policy_attachment"
   policy_arn = aws_iam_policy.user_creation_lambda_role_policy.arn
-  roles = [aws_iam_role.user_creation_lambda_role.name]
+  roles      = [aws_iam_role.user_creation_lambda_role.name]
 }
 
 resource "aws_iam_role" "user_creation_lambda_role" {
-  name = "user_creation_lambda_role"
+  name               = "user_creation_lambda_role"
   assume_role_policy = <<EOF
 {
   "Version": "2012-10-17",
@@ -108,9 +108,9 @@ EOF
 
 resource "aws_lambda_function" "user_creation_lambda" {
   function_name = var.lambda_name
-  handler = "index.handler"
-  role = aws_iam_role.user_creation_lambda_role.arn
-  runtime = var.runtime
-  s3_bucket = aws_s3_bucket.user_creation_lambda_bucket.bucket
-  s3_key = aws_s3_bucket_object.user_creation_lambda_code.key
+  handler       = "index.handler"
+  role          = aws_iam_role.user_creation_lambda_role.arn
+  runtime       = var.runtime
+  s3_bucket     = aws_s3_bucket.user_creation_lambda_bucket.bucket
+  s3_key        = aws_s3_bucket_object.user_creation_lambda_code.key
 }

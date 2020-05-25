@@ -12,6 +12,6 @@ variable "logging_bucket" {
 
 variable "env" {
   default = "dev"
-  type = string
+  type    = string
 }
 

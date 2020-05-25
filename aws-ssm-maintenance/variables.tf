@@ -3,15 +3,15 @@ variable "app_name" {
 }
 
 variable "env" {
-  type    = string
+  type = string
 }
 
 variable "cron_expr" {
-  type    = string
+  type = string
 }
 
 variable "instance_ids" {
-  type = list(string)
+  type    = list(string)
   default = []
 }
 
@@ -32,5 +32,5 @@ variable "commands" {
 
 variable "comment" {
   default = ""
-  type = string
+  type    = string
 }

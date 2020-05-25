@@ -1,19 +1,19 @@
 variable "regions" {
-  type    = list(string)
+  type = list(string)
 }
 
 variable "region" {
-  type    = string
+  type = string
 }
 
 variable "project" {
-  type    = string
+  type = string
 }
 
 variable "cidrs" {
-  type    = list(string)
+  type = list(string)
 }
 
 variable "name" {
-  type    = string
+  type = string
 }

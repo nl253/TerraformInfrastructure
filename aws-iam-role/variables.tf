@@ -1,13 +1,13 @@
 variable "action" {
   type        = any
   description = "Actions that the principal will do."
-  default = null
+  default     = null
 }
 
 variable "resource" {
   type        = any
   description = "Resources that the principal can perform actions on."
-  default = null
+  default     = null
 }
 
 variable "principal" {
@@ -18,7 +18,7 @@ variable "principal" {
 variable "policies" {
   type        = list(string)
   description = "Managed policies to attach to role."
-  default = []
+  default     = []
 }
 
 variable "name" {
@@ -43,6 +43,6 @@ variable "app_name" {
 }
 
 variable "env" {
-  type = string
+  type    = string
   default = "dev"
 }

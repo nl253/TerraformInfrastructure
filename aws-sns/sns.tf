@@ -1,6 +1,6 @@
 provider "aws" {
   profile = "ma"
-  region = "eu-west-2"
+  region  = "eu-west-2"
 }
 
 data "archive_file" "lambda_zip" {
@@ -18,13 +18,13 @@ data "aws_iam_role" "lambda_role" {
 }
 
 resource "aws_lambda_function" "receiver_lambda" {
-  function_name = "receiver_lambda"
-  handler = "index.handler"
-  role = data.aws_iam_role.lambda_role.arn
-  runtime = "python3.8"
-  filename = "index.zip"
+  function_name    = "receiver_lambda"
+  handler          = "index.handler"
+  role             = data.aws_iam_role.lambda_role.arn
+  runtime          = "python3.8"
+  filename         = "index.zip"
   source_code_hash = filebase64sha512("index.py")
-  publish = true
+  publish          = true
   tracing_config {
     mode = "Active"
   }
@@ -46,7 +46,7 @@ resource "aws_lambda_permission" "allow_sns" {
 }
 
 resource "aws_sns_topic_subscription" "subscription" {
-  endpoint = aws_lambda_function.receiver_lambda.arn
-  protocol = "lambda"
+  endpoint  = aws_lambda_function.receiver_lambda.arn
+  protocol  = "lambda"
   topic_arn = data.aws_sns_topic.account_info_topic.arn
 }

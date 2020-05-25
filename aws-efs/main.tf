@@ -6,8 +6,8 @@ resource "aws_efs_file_system" "efs" {
     transition_to_ia = "AFTER_30_DAYS"
   }
   performance_mode = "generalPurpose"
-  encrypted = var.encrypted
-  throughput_mode = "bursting"
+  encrypted        = var.encrypted
+  throughput_mode  = "bursting"
   tags = {
     Name        = "${var.app_name}-fs"
     Application = var.app_name

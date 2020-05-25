@@ -33,40 +33,40 @@ module "task_role" {
 }
 
 module "security_group" {
-  source = "../aws-security-group"
+  source   = "../aws-security-group"
   app_name = var.app_name
-  env = var.env
-  self = true
+  env      = var.env
+  self     = true
   rules = [
     {
-      type = "ingress"
+      type     = "ingress"
       protocol = "tcp"
-      port = 80
-      cidr = "0.0.0.0/0"
+      port     = 80
+      cidr     = "0.0.0.0/0"
     },
     {
-      type = "ingress"
+      type     = "ingress"
       protocol = "tcp"
-      port = 8080
-      cidr = "0.0.0.0/0"
+      port     = 8080
+      cidr     = "0.0.0.0/0"
     },
     {
-      type = "ingress"
+      type     = "ingress"
       protocol = "tcp"
-      port = 50000
-      cidr = "0.0.0.0/0"
+      port     = 50000
+      cidr     = "0.0.0.0/0"
     },
     {
-      type = "ingress"
+      type     = "ingress"
       protocol = "tcp"
-      port = 111
-      cidr = "0.0.0.0/0"
+      port     = 111
+      cidr     = "0.0.0.0/0"
     },
     {
-      type = "ingress"
+      type     = "ingress"
       protocol = "tcp"
-      port = 2049
-      cidr = "0.0.0.0/0"
+      port     = 2049
+      cidr     = "0.0.0.0/0"
     }
   ]
   internet = true

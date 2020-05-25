@@ -9,7 +9,7 @@ variable "app_name" {
 }
 
 variable "alb_protocol" {
-  type = string
+  type    = string
   default = "HTTP"
 }
 

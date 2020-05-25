@@ -6,7 +6,7 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket = "codebuild-nl"
-    key = "example-cloudwatch-alarm/terraform.tfstate"
+    key    = "example-cloudwatch-alarm/terraform.tfstate"
     region = "eu-west-2"
   }
 }
@@ -23,7 +23,7 @@ resource "aws_cloudwatch_metric_alarm" "alarm" {
   statistic                 = var.stat
   alarm_actions             = []
   unit                      = var.unit
-  metric_name = var.metric
+  metric_name               = var.metric
   period                    = var.period
   namespace                 = var.service
   tags = {
@@ -33,7 +33,7 @@ resource "aws_cloudwatch_metric_alarm" "alarm" {
 }
 
 module "rg" {
-  source = "../aws-resource-group"
+  source   = "../aws-resource-group"
   app_name = var.app_name
-  env = var.env
+  env      = var.env
 }

@@ -1,9 +1,9 @@
 variable "app_name" {
   default = "ci"
-  type = string
+  type    = string
 }
 
 variable "env" {
   default = "dev"
-  type = string
+  type    = string
 }

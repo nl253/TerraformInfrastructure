@@ -59,7 +59,7 @@ resource "google_compute_instance_template" "template" {
   }
 
   service_account {
-    email = var.service_account
+    email  = var.service_account
     scopes = var.service_account_scopes
   }
 }
