@@ -18,7 +18,7 @@ variable "unit" {
   default = null
 }
 
-variable "stat" {
+variable "statistic" {
   type    = string
   default = "Average"
 }
