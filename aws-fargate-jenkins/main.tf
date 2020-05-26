@@ -21,6 +21,12 @@ resource "aws_cloudwatch_log_group" "logs" {
   name_prefix = "/aws/ecs/fargate/${var.app_name}/"
 }
 
+module "budget" {
+  source   = "../aws-budget-project"
+  amount   = 10
+  app_name = var.app_name
+}
+
 module "task_role" {
   source   = "../aws-iam-role"
   env      = var.env
