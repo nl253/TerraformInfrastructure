@@ -1,6 +1,6 @@
 resource "aws_alb_target_group" "alb_target" {
   name     = "${var.app_name}-target-group-${count.index + 1}"
-  port     = tolist(var.ports_targets)[count.index]
+  port     = var.ports_targets[count.index]
   protocol = "HTTP"
   vpc_id   = var.vpc_id
   stickiness {
@@ -11,7 +11,7 @@ resource "aws_alb_target_group" "alb_target" {
     enabled             = true
     interval            = 30
     path                = "/"
-    port                = tolist(var.ports_targets)[count.index]
+    port                = var.ports_targets[count.index]
     healthy_threshold   = 3
     matcher             = "200-299,403"
     unhealthy_threshold = 3
@@ -19,7 +19,7 @@ resource "aws_alb_target_group" "alb_target" {
     timeout             = "15"
   }
   target_type = "ip"
-  count       = length(tolist(var.ports_targets))
+  count       = length(var.ports_targets)
   tags = {
     Application = var.app_name
     Environment = var.env
@@ -34,7 +34,7 @@ resource "aws_lb_listener" "listener" {
     type             = "forward"
     target_group_arn = aws_alb_target_group.alb_target[count.index].arn
   }
-  count = 2
+  count = length(var.ports)
 }
 
 resource "aws_alb" "alb" {
@@ -67,7 +67,7 @@ resource "aws_cloudwatch_metric_alarm" "health_check_alarm" {
     TargetGroup  = aws_alb_target_group.alb_target[count.index].arn_suffix
     LoadBalancer = aws_alb.alb.arn_suffix
   }
-  count = length(tolist(var.ports))
+  count = length(var.ports)
   tags = {
     Application = var.app_name
     Environment = var.env
@@ -81,7 +81,7 @@ resource "aws_route53_health_check" "health_check" {
   insufficient_data_health_status = "Healthy"
   cloudwatch_alarm_region         = var.region
   cloudwatch_alarm_name           = aws_cloudwatch_metric_alarm.health_check_alarm[count.index].alarm_name
-  count                           = length(tolist(var.ports))
+  count                           = length(var.ports)
   tags = {
     Name        = "Health Check ${var.app_name} ALB ${count.index + 1}"
     Application = var.app_name
