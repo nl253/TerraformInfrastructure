@@ -11,11 +11,6 @@ terraform {
   }
 }
 
-variable "region" {
-  default = "eu-west-2"
-  type    = string
-}
-
 resource "aws_cloudtrail" "trail" {
   enable_log_file_validation    = true
   enable_logging                = true
