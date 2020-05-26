@@ -3,18 +3,19 @@ provider "aws" {
   profile = "ma"
 }
 
-//terraform {
-//  backend "s3" {
-//    bucket = "codebuild-nl"
-//    key    = "ec2/personal-vm/terraform.tfstate"
-//    region = "eu-west-2"
-//  }
-//}
+terraform {
+  backend "s3" {
+    bucket = "codebuild-nl"
+    key    = "ec2/personal-vm/terraform.tfstate"
+    region = "eu-west-2"
+  }
+}
 
 data "aws_caller_identity" "id" {}
 
+
 resource "aws_spot_instance_request" "vm" {
-  subnet_id = var.subnet_id
+  subnet_id                       = var.subnet_id
   ami                             = var.ami
   wait_for_fulfillment            = true
   availability_zone               = "${var.region}b"
@@ -31,14 +32,16 @@ resource "aws_spot_instance_request" "vm" {
   key_name                        = var.key_pair_name
   instance_interruption_behaviour = "stop"
   tags = {
-    Name                   = "personal-vm"
+    Name                   = var.app_name
+    Application            = var.app_name
+    Environment            = var.env
     "scheduled-start-stop" = "18 - 22"
     "personal-vm"          = "1"
   }
   tenancy = "default"
 
-  private_ip        = "10.0.183.236"
-  source_dest_check = true
+  private_ip             = "10.0.183.236"
+  source_dest_check      = true
   vpc_security_group_ids = [aws_security_group.sg.id]
 
   credit_specification {
@@ -55,11 +58,11 @@ resource "aws_spot_instance_request" "vm" {
   user_data  = var.user_data
 }
 
-resource "aws_volume_attachment" "volume_attachment" {
-  device_name = "/dev/sda2"
-  instance_id = aws_spot_instance_request.vm.spot_instance_id
-  volume_id = aws_ebs_volume.volume.id
-}
+//resource "aws_volume_attachment" "volume_attachment" {
+//  device_name = "/dev/sda2"
+//  instance_id = aws_spot_instance_request.vm.spot_instance_id
+//  volume_id   = aws_ebs_volume.volume.id
+//}
 
 resource "aws_ebs_volume" "volume" {
   iops                 = 100
@@ -75,6 +78,8 @@ resource "aws_ebs_volume" "volume" {
   availability_zone = "${var.region}b"
   tags = {
     Name                     = "${var.app_name}-volume"
+    Application              = var.app_name
+    Environment              = var.env
     "personal-vm"            = "1"
     "volume-snapshot-policy" = "enabled"
   }
@@ -84,6 +89,8 @@ resource "aws_placement_group" "placement" {
   name     = "${var.app_name}-placement-group"
   strategy = "cluster"
   tags = {
+    Application              = var.app_name
+    Environment              = var.env
     Name                     = "${var.app_name}-placement-group"
     "personal-vm"            = "1"
     "volume-snapshot-policy" = "enabled"
@@ -96,36 +103,38 @@ resource "aws_security_group" "sg" {
   revoke_rules_on_delete = true
   vpc_id                 = var.vpc_id
   tags = {
+    Application   = var.app_name
+    Environment   = var.env
     Name          = "${var.app_name}-security-group"
     "personal-vm" = "1"
   }
   ingress {
-    cidr_blocks       = ["0.0.0.0/0"]
-    description       = "Allow SSH access."
-    from_port         = 22
-    ipv6_cidr_blocks  = []
-    prefix_list_ids   = []
-    protocol          = "tcp"
-    self              = false
-    to_port           = 22
+    cidr_blocks      = ["0.0.0.0/0"]
+    description      = "Allow SSH access."
+    from_port        = 22
+    ipv6_cidr_blocks = []
+    prefix_list_ids  = []
+    protocol         = "tcp"
+    self             = false
+    to_port          = 22
   }
   egress {
-    cidr_blocks       = ["0.0.0.0/0"]
-    from_port         = 0
-    ipv6_cidr_blocks  = []
-    prefix_list_ids   = []
-    protocol          = "-1"
-    self              = false
-    to_port           = 0
+    cidr_blocks      = ["0.0.0.0/0"]
+    from_port        = 0
+    ipv6_cidr_blocks = []
+    prefix_list_ids  = []
+    protocol         = "-1"
+    self             = false
+    to_port          = 0
   }
   ingress {
-    cidr_blocks       = ["0.0.0.0/0"]
-    from_port         = 0
-    ipv6_cidr_blocks  = []
-    prefix_list_ids   = []
-    protocol          = "-1"
-    self              = true
-    to_port           = 0
+    cidr_blocks      = ["0.0.0.0/0"]
+    from_port        = 0
+    ipv6_cidr_blocks = []
+    prefix_list_ids  = []
+    protocol         = "-1"
+    self             = true
+    to_port          = 0
   }
 }
 
@@ -136,13 +145,16 @@ resource "aws_eip" "ip" {
   public_ipv4_pool = "amazon"
   vpc              = true
   tags = {
+    Application   = var.app_name
+    Environment   = var.env
+    Name          = "${var.app_name}-ip"
     "personal-vm" = "1"
   }
 }
 
 resource "aws_eip_association" "ip_association" {
-  instance_id = aws_spot_instance_request.vm.spot_instance_id
-  allocation_id        = aws_eip.ip.id
+  instance_id   = aws_spot_instance_request.vm.spot_instance_id
+  allocation_id = aws_eip.ip.id
 }
 
 resource "aws_efs_file_system" "efs" {
@@ -158,4 +170,10 @@ resource "aws_efs_mount_target" "efs_mount_target" {
   file_system_id  = aws_efs_file_system.efs.id
   subnet_id       = var.subnet_id
   security_groups = [aws_security_group.sg.id]
+}
+
+module "budget" {
+  source   = "../aws-budget-project"
+  amount   = 10
+  app_name = var.app_name
 }
