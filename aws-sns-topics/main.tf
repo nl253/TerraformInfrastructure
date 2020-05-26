@@ -33,13 +33,19 @@ variable "region" {
   default = "eu-west-2"
 }
 
-resource "aws_sns_topic" "topic_deployment" {
+variable "topics" {
+  type = list(string)
+  default = ["deployment", "account info", "failure"]
+}
+
+resource "aws_sns_topic" "topics" {
   application_success_feedback_sample_rate = 0
-  display_name                             = "Deployment"
+  display_name                             = replace(var.topics[count.index], "-", " ")
   http_success_feedback_sample_rate        = 0
   kms_master_key_id                        = "alias/aws/sns"
   lambda_success_feedback_sample_rate      = 0
-  name                                     = "deployment"
+  name                                     = replace(var.topics[count.index], " ", "-")
+  count = length(var.topics)
   policy = jsonencode(
     {
       Id = "__default_policy_ID"
@@ -55,41 +61,7 @@ resource "aws_sns_topic" "topic_deployment" {
           Principal = {
             AWS = "*"
           }
-          Resource = "arn:aws:sns:${var.region}:${data.aws_caller_identity.id.account_id}:deployment"
-          Sid      = "__default_statement_ID"
-        },
-      ]
-      Version = "2008-10-17"
-    }
-  )
-  sqs_success_feedback_sample_rate = 0
-  tags                             = {}
-
-}
-
-resource "aws_sns_topic" "topic_account_info" {
-  application_success_feedback_sample_rate = 0
-  display_name                             = "Account Information"
-  http_success_feedback_sample_rate        = 0
-  kms_master_key_id                        = "alias/aws/sns"
-  lambda_success_feedback_sample_rate      = 0
-  name                                     = "account-info"
-  policy = jsonencode(
-    {
-      Id = "__default_policy_ID"
-      Statement = [
-        {
-          Action = var.action
-          Condition = {
-            StringEquals = {
-              "AWS:SourceOwner" = data.aws_caller_identity.id.account_id
-            }
-          }
-          Effect = "Allow"
-          Principal = {
-            AWS = "*"
-          }
-          Resource = "arn:aws:sns:${var.region}:${data.aws_caller_identity.id.account_id}:account-info"
+          Resource = "arn:aws:sns:${var.region}:${data.aws_caller_identity.id.account_id}:${replace(var.topics[count.index], " ", "-")}"
           Sid      = "__default_statement_ID"
         },
       ]
@@ -99,6 +71,7 @@ resource "aws_sns_topic" "topic_account_info" {
   sqs_success_feedback_sample_rate = 0
   tags                             = {}
 }
+
 
 resource "aws_sns_topic" "topic_consumption_warning" {
   application_success_feedback_sample_rate = 0
@@ -132,34 +105,3 @@ resource "aws_sns_topic" "topic_consumption_warning" {
   tags                             = {}
 }
 
-resource "aws_sns_topic" "topic_failure" {
-  application_success_feedback_sample_rate = 0
-  display_name                             = "Failure"
-  http_success_feedback_sample_rate        = 0
-  kms_master_key_id                        = "alias/aws/sns"
-  lambda_success_feedback_sample_rate      = 0
-  name                                     = "failure"
-  policy = jsonencode(
-    {
-      Id = "__default_policy_ID"
-      Statement = [
-        {
-          Action = var.action
-          Condition = {
-            StringEquals = {
-              "AWS:SourceOwner" = data.aws_caller_identity.id.account_id
-            }
-          }
-          Effect = "Allow"
-          Principal = {
-            AWS = "*"
-          }
-          Resource = "arn:aws:sns:${var.region}:${data.aws_caller_identity.id.account_id}:failure"
-          Sid      = "__default_statement_ID"
-        },
-      ]
-      Version = "2008-10-17"
-  })
-  sqs_success_feedback_sample_rate = 0
-  tags                             = {}
-}
