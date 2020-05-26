@@ -11,6 +11,28 @@ terraform {
   }
 }
 
+variable "action" {
+  type = any
+  default = [
+    "SNS:AddPermission",
+    "SNS:DeleteTopic",
+    "SNS:GetTopicAttributes",
+    "SNS:ListSubscriptionsByTopic",
+    "SNS:Publish",
+    "SNS:Receive",
+    "SNS:RemovePermission",
+    "SNS:SetTopicAttributes",
+    "SNS:Subscribe",
+  ]
+}
+
+data "aws_caller_identity" "id" {}
+
+variable "region" {
+  type    = string
+  default = "eu-west-2"
+}
+
 resource "aws_sns_topic" "topic_deployment" {
   application_success_feedback_sample_rate = 0
   display_name                             = "Deployment"
@@ -23,27 +45,17 @@ resource "aws_sns_topic" "topic_deployment" {
       Id = "__default_policy_ID"
       Statement = [
         {
-          Action = [
-            "SNS:Publish",
-            "SNS:RemovePermission",
-            "SNS:SetTopicAttributes",
-            "SNS:DeleteTopic",
-            "SNS:ListSubscriptionsByTopic",
-            "SNS:GetTopicAttributes",
-            "SNS:Receive",
-            "SNS:AddPermission",
-            "SNS:Subscribe",
-          ]
+          Action = var.action
           Condition = {
             StringEquals = {
-              "AWS:SourceOwner" = "660847692645"
+              "AWS:SourceOwner" = data.aws_caller_identity.id.account_id
             }
           }
           Effect = "Allow"
           Principal = {
             AWS = "*"
           }
-          Resource = "arn:aws:sns:eu-west-2:660847692645:deployment"
+          Resource = "arn:aws:sns:${var.region}:${data.aws_caller_identity.id.account_id}:deployment"
           Sid      = "__default_statement_ID"
         },
       ]
@@ -67,27 +79,17 @@ resource "aws_sns_topic" "topic_account_info" {
       Id = "__default_policy_ID"
       Statement = [
         {
-          Action = [
-            "SNS:GetTopicAttributes",
-            "SNS:SetTopicAttributes",
-            "SNS:AddPermission",
-            "SNS:RemovePermission",
-            "SNS:DeleteTopic",
-            "SNS:Subscribe",
-            "SNS:ListSubscriptionsByTopic",
-            "SNS:Publish",
-            "SNS:Receive",
-          ]
+          Action = var.action
           Condition = {
             StringEquals = {
-              "AWS:SourceOwner" = "660847692645"
+              "AWS:SourceOwner" = data.aws_caller_identity.id.account_id
             }
           }
           Effect = "Allow"
           Principal = {
             AWS = "*"
           }
-          Resource = "arn:aws:sns:eu-west-2:660847692645:account-info"
+          Resource = "arn:aws:sns:${var.region}:${data.aws_caller_identity.id.account_id}:account-info"
           Sid      = "__default_statement_ID"
         },
       ]
@@ -109,27 +111,17 @@ resource "aws_sns_topic" "topic_consumption_warning" {
       Id = "__default_policy_ID"
       Statement = [
         {
-          Action = [
-            "SNS:GetTopicAttributes",
-            "SNS:SetTopicAttributes",
-            "SNS:AddPermission",
-            "SNS:RemovePermission",
-            "SNS:DeleteTopic",
-            "SNS:Subscribe",
-            "SNS:ListSubscriptionsByTopic",
-            "SNS:Publish",
-            "SNS:Receive",
-          ]
+          Action = var.action
           Condition = {
             StringEquals = {
-              "AWS:SourceOwner" = "660847692645"
+              "AWS:SourceOwner" = data.aws_caller_identity.id.account_id
             }
           }
           Effect = "Allow"
           Principal = {
             AWS = "*"
           }
-          Resource = "arn:aws:sns:eu-west-2:660847692645:consumption-warning"
+          Resource = "arn:aws:sns:${var.region}:${data.aws_caller_identity.id.account_id}:consumption-warning"
           Sid      = "__default_statement_ID"
         },
       ]
@@ -152,27 +144,17 @@ resource "aws_sns_topic" "topic_failure" {
       Id = "__default_policy_ID"
       Statement = [
         {
-          Action = [
-            "SNS:GetTopicAttributes",
-            "SNS:SetTopicAttributes",
-            "SNS:AddPermission",
-            "SNS:RemovePermission",
-            "SNS:DeleteTopic",
-            "SNS:Subscribe",
-            "SNS:ListSubscriptionsByTopic",
-            "SNS:Publish",
-            "SNS:Receive",
-          ]
+          Action = var.action
           Condition = {
             StringEquals = {
-              "AWS:SourceOwner" = "660847692645"
+              "AWS:SourceOwner" = data.aws_caller_identity.id.account_id
             }
           }
           Effect = "Allow"
           Principal = {
             AWS = "*"
           }
-          Resource = "arn:aws:sns:eu-west-2:660847692645:failure"
+          Resource = "arn:aws:sns:${var.region}:${data.aws_caller_identity.id.account_id}:failure"
           Sid      = "__default_statement_ID"
         },
       ]
