@@ -1,16 +1,3 @@
-provider "aws" {
-  profile = "ma"
-  region  = "eu-west-2"
-}
-
-terraform {
-  backend "s3" {
-    region = "eu-west-2"
-    bucket = "codebuild-nl"
-    key    = "iam-role/terraform.tfstate"
-  }
-}
-
 resource "aws_iam_role" "role" {
   name                  = var.name
   path                  = var.path
