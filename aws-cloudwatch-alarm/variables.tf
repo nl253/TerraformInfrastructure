@@ -204,3 +204,8 @@ variable "evaluation_periods" {
 //    error_message = "Must be > 0."
 //  }
 }
+
+variable "sns_arns" {
+  default = ["arn:aws:sns:eu-west-2:660847692645:failure"]
+  type = list(string)
+}
