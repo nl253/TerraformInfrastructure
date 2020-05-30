@@ -4,10 +4,7 @@ resource "aws_subnet" "subnet_private" {
   availability_zone               = var.az
   map_public_ip_on_launch         = false
   assign_ipv6_address_on_creation = false
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }
 
 resource "aws_network_acl" "private_nacl" {
@@ -29,10 +26,7 @@ resource "aws_network_acl" "private_nacl" {
     rule_no    = 102
     to_port    = 0
   }
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }
 
 resource "aws_route_table" "route_table_private" {
@@ -41,10 +35,7 @@ resource "aws_route_table" "route_table_private" {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.nat.id
   }
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }
 
 resource "aws_route_table_association" "route_table_association_private" {
@@ -67,8 +58,5 @@ resource "aws_security_group" "private_sg" {
     protocol  = "tcp"
     to_port   = 0
   }
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }

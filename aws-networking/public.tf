@@ -4,10 +4,7 @@ resource "aws_subnet" "subnet_public" {
   availability_zone               = var.az
   map_public_ip_on_launch         = true
   assign_ipv6_address_on_creation = false
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }
 
 resource "aws_network_acl" "public_nacl" {
@@ -29,10 +26,7 @@ resource "aws_network_acl" "public_nacl" {
     rule_no    = 102
     to_port    = 0
   }
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }
 
 resource "aws_route_table" "route_table_public" {
@@ -41,10 +35,7 @@ resource "aws_route_table" "route_table_public" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.ig.id
   }
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }
 
 resource "aws_route_table_association" "route_table_association_public" {
@@ -66,8 +57,5 @@ resource "aws_security_group" "public_sg" {
     protocol  = "tcp"
     to_port   = 0
   }
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }

@@ -11,41 +11,36 @@ terraform {
   }
 }
 
-resource "aws_internet_gateway" "ig" {
-  vpc_id = aws_vpc.vpc.id
+locals {
   tags = {
     Application = var.app_name
     Environment = var.env
   }
+}
+
+resource "aws_internet_gateway" "ig" {
+  vpc_id = aws_vpc.vpc.id
+  tags = local.tags
 }
 
 resource "aws_vpc" "vpc" {
   cidr_block                       = var.cidr_vpc
   assign_generated_ipv6_cidr_block = false
   enable_dns_hostnames             = false
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }
 
 resource "aws_eip" "ip" {
   depends_on = [aws_internet_gateway.ig, aws_vpc.vpc]
   vpc        = true
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }
 
 resource "aws_nat_gateway" "nat" {
   depends_on    = [aws_internet_gateway.ig, aws_vpc.vpc]
   subnet_id     = aws_subnet.subnet_public.id
   allocation_id = aws_eip.ip.id
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }
 
 module "rg" {
