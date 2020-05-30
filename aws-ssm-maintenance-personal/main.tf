@@ -11,10 +11,20 @@ terraform {
   }
 }
 
+variable "app_name" {
+  default = "ssm"
+  type    = string
+}
+
+variable "env" {
+  type    = string
+  default = "dev"
+}
+
 module "maintenance" {
   source   = "../aws-ssm-maintenance"
-  app_name = "ssm"
-  env      = "dev"
+  app_name = var.app_name
+  env      = var.env
   commands = ["find -type f"]
   instance_ids = [
     "mi-018e8423e1e16af4d",
@@ -22,4 +32,10 @@ module "maintenance" {
     "mi-0c89869c046368d48",
   ]
   cron_expr = "cron(0 0 0 ? * * *)"
+}
+
+module "budget" {
+  source   = "../aws-budget-project"
+  amount   = 5
+  app_name = var.app_name
 }
