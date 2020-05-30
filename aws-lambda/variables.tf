@@ -44,3 +44,23 @@ variable "env_vars" {
   type = map(string)
   default = {}
 }
+
+variable "max_execution_duration" {
+  default = 8
+  type = number
+}
+
+variable "max_execution_failures_per_min" {
+  type = number
+  default = 5
+}
+
+variable "max_executions_per_min" {
+  default = 30
+  type = number
+}
+
+variable "storage_bucket" {
+  default = "codebuild-nl"
+  type = string
+}

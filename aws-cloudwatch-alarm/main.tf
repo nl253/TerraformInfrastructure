@@ -1,5 +1,5 @@
 resource "aws_cloudwatch_metric_alarm" "alarm" {
-  alarm_name                = "${var.app_name}-alarm"
+  alarm_name                = "${var.app_name}-${replace(var.service, "AWS/", "")}-${var.unit}-${var.metric}-alarm"
   alarm_description         = "${var.metric} in  ${var.app_name} (${var.env}) has exceeded ${var.threshold}"
   comparison_operator       = "GreaterThanOrEqualToThreshold"
   evaluation_periods        = var.evaluation_periods

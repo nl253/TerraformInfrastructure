@@ -105,7 +105,7 @@ module "route53_health_check" {
   app_name = var.app_name
   env      = var.env
   ports    = [80, 50000]
-  uri      = "${var.app_name}.${substr(data.aws_route53_zone.route53_hosted_zone.name, 0, length(data.aws_route53_zone.route53_hosted_zone.name) - 1)}"
+  domain      = "${var.app_name}.${substr(data.aws_route53_zone.route53_hosted_zone.name, 0, length(data.aws_route53_zone.route53_hosted_zone.name) - 1)}"
 }
 
 resource "aws_route53_record" "dns_records" {

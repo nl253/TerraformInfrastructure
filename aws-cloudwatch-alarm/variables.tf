@@ -1,6 +1,5 @@
 variable "app_name" {
   type    = string
-  default = "testapp123"
 }
 
 variable "threshold" {
@@ -23,7 +22,7 @@ variable "period_seconds" {
 
 variable "unit" {
   type    = string
-  default = null
+  default = "Count"
 //  validation {
 //    condition = contains([
 //      "Seconds",
@@ -60,7 +59,6 @@ variable "unit" {
 
 variable "statistic" {
   type    = string
-  default = "Average"
 //  validation {
 //    condition = contains([
 //      'Average',
@@ -79,12 +77,10 @@ variable "statistic" {
 }
 
 variable "metric" {
-  default = "BucketSizeBytes"
   type    = string
 }
 
 variable "service" {
-  default = "AWS/S3"
   type    = string
 //  validation {
 //    condition = contains([
@@ -188,7 +184,6 @@ variable "service" {
 }
 
 variable "env" {
-  default = "dev"
   type    = string
 //  validation {
 //    condition = length(var.env) > 0

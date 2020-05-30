@@ -6,12 +6,13 @@ variable "env" {
   type = string
 }
 
-variable "uri" {
+variable "domain" {
   type = string
 }
 
 variable "ports" {
   type = list(number)
+  default = [443]
 }
 
 variable "path" {
