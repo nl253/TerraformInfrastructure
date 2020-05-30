@@ -8,7 +8,7 @@ variable "threshold" {
   default = 10
 }
 
-variable "period" {
+variable "period_seconds" {
   type    = number
   default = 120
 }
@@ -36,4 +36,14 @@ variable "service" {
 variable "env" {
   default = "dev"
   type    = string
+}
+
+variable "dimensions" {
+  default = null
+  type = map(any)
+}
+
+variable "evaluation_periods" {
+  default = 3
+  type = number
 }

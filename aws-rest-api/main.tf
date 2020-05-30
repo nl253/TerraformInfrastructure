@@ -32,6 +32,20 @@ module "rg" {
   env = var.env
 }
 
+module "alarm" {
+  source = "../aws-cloudwatch-alarm"
+  metric = "5XXError"
+  service = "AWS/ApiGateway"
+  statistic = "Sum"
+  threshold = 5
+  unit = "Count"
+  evaluation_periods = 1
+  period_seconds = 120
+  dimensions = {
+    ApiName = aws_api_gateway_rest_api.api.name
+  }
+}
+
 resource "aws_api_gateway_rest_api" "api" {
   name                     = "${var.app_name}-rest-api"
   minimum_compression_size = 1
