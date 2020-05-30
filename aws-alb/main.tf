@@ -1,3 +1,10 @@
+locals {
+  tags = {
+    Application = var.app_name
+    Environment = var.env
+  }
+}
+
 resource "aws_alb_target_group" "alb_target" {
   name     = "${var.app_name}-target-group-${count.index + 1}"
   port     = var.ports_targets[count.index]
@@ -20,10 +27,7 @@ resource "aws_alb_target_group" "alb_target" {
   }
   target_type = "ip"
   count       = length(var.ports_targets)
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }
 
 resource "aws_lb_listener" "listener" {
@@ -44,10 +48,7 @@ resource "aws_alb" "alb" {
   subnets                    = tolist(var.subnet_ids)
   internal                   = false
   security_groups            = [var.security_group_id]
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }
 
 resource "aws_cloudwatch_metric_alarm" "health_check_alarm" {
@@ -68,10 +69,7 @@ resource "aws_cloudwatch_metric_alarm" "health_check_alarm" {
     LoadBalancer = aws_alb.alb.arn_suffix
   }
   count = length(var.ports)
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }
 
 resource "aws_route53_health_check" "health_check" {
@@ -82,9 +80,5 @@ resource "aws_route53_health_check" "health_check" {
   cloudwatch_alarm_region         = var.region
   cloudwatch_alarm_name           = aws_cloudwatch_metric_alarm.health_check_alarm[count.index].alarm_name
   count                           = length(var.ports)
-  tags = {
-    Name        = "Health Check ${var.app_name} ALB ${count.index + 1}"
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }
