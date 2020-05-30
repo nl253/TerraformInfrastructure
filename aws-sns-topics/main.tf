@@ -11,34 +11,12 @@ terraform {
   }
 }
 
-variable "action" {
-  type = any
-  default = [
-    "SNS:AddPermission",
-    "SNS:DeleteTopic",
-    "SNS:GetTopicAttributes",
-    "SNS:ListSubscriptionsByTopic",
-    "SNS:Publish",
-    "SNS:Receive",
-    "SNS:RemovePermission",
-    "SNS:SetTopicAttributes",
-    "SNS:Subscribe",
-  ]
-}
-
 data "aws_caller_identity" "id" {}
 
-variable "region" {
-  type    = string
-  default = "eu-west-2"
-}
-
-variable "topics" {
-  type    = list(string)
-  default = ["deployment", "account info", "failure", "consumption warning"]
-}
-
 resource "aws_sns_topic" "topics" {
+  lifecycle {
+    prevent_destroy = true
+  }
   application_success_feedback_sample_rate = 0
   display_name                             = replace(var.topics[count.index], "-", " ")
   http_success_feedback_sample_rate        = 0
@@ -69,5 +47,20 @@ resource "aws_sns_topic" "topics" {
     }
   )
   sqs_success_feedback_sample_rate = 0
-  tags                             = {}
+  tags                             = {
+    Application = var.app_name
+    Environment = var.env
+  }
+}
+
+module "budget" {
+  source   = "../aws-budget-project"
+  amount   = 5
+  app_name = var.app_name
+}
+
+module "rg" {
+  source   = "../aws-resource-group"
+  app_name = var.app_name
+  env      = var.env
 }
