@@ -21,11 +21,34 @@ resource "aws_s3_bucket_object" "lambda_code" {
   }
 }
 
+resource "aws_iam_policy" "policy_kms" {
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid = "${replace(replace(replace(var.app_name, "-", ""), "_", ""), " ", "")}LambdaKMSReadOnlyPolicyStatement"
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:GetKeyPolicy",
+          "kms:Verify",
+          "kms:ListKeys",
+          "kms:GetKeyRotationStatus",
+          "kms:ListAliases",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
 module "role" {
   source = "../aws-iam-role"
   app_name = var.app_name
   name = "${var.app_name}-lambda-role"
   policies = concat([
+    aws_iam_policy.policy_kms.arn,
     "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
     "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess",
   ],

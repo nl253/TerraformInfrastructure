@@ -1,2 +1,11 @@
+import json
+
+
 def handler(x, y):
-    return "hello"
+    return dict(
+        statusCode=200,
+        headers={
+            'Content-Type': 'application/json',
+        },
+        body=json.dumps({'ok': True}),
+        isBase64Encoded=False)

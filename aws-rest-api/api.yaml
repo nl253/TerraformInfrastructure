@@ -1,78 +1,42 @@
 openapi: "3.0.0"
 info:
   version: 1.0.0
-  title: Swagger Petstore
+  title: Swagger Store
   license:
     name: MIT
 servers:
-  - url: http://petstore.swagger.io/v1
+  - url: http://store.swagger.io/v1
 paths:
-  /pets:
+  /invoke/{id}:
     get:
-      summary: List all pets
-      operationId: listPets
+      summary: ''
+      operationId: invoke
       tags:
-        - pets
+        - invoke
       parameters:
-        - name: limit
-          in: query
-          description: How many items to return at one time (max 100)
-          required: false
-          schema:
-            type: integer
-            format: int32
-      responses:
-        '200':
-          description: A paged array of pets
-          headers:
-            x-next:
-              description: A link to the next page of responses
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Pets"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    post:
-      summary: Create a pet
-      operationId: createPets
-      tags:
-        - pets
-      responses:
-        '201':
-          description: Null response
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /pets/{petId}:
-    get:
-      summary: Info for a specific pet
-      operationId: showPetById
-      tags:
-        - pets
-      parameters:
-        - name: petId
+        - name: id
           in: path
           required: true
-          description: The id of the pet to retrieve
+          description: The id of the item to retrieve
           schema:
             type: string
+      x-amazon-apigateway-integration:
+        uri:
+          arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/arn:${AWS::Partition}:lambda:${AWS::Region}:${AWS::AccountId}:function:test-api-rest-app-123551-lambda-func1/invocations
+        responses:
+          default:
+            statusCode: "200"
+        passthroughBehavior: "when_no_match"
+        httpMethod: "POST"
+        contentHandling: "CONVERT_TO_TEXT"
+        type: "aws_proxy"
       responses:
         '200':
           description: Expected response to a valid request
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Pet"
+                $ref: "#/components/schemas/Item"
         default:
           description: unexpected error
           content:
@@ -81,7 +45,7 @@ paths:
                 $ref: "#/components/schemas/Error"
 components:
   schemas:
-    Pet:
+    Item:
       type: object
       required:
         - id
@@ -94,10 +58,10 @@ components:
           type: string
         tag:
           type: string
-    Pets:
+    Items:
       type: array
       items:
-        $ref: "#/components/schemas/Pet"
+        $ref: "#/components/schemas/Item"
     Error:
       type: object
       required:
