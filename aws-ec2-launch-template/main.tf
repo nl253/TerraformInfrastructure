@@ -6,8 +6,15 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket = "codebuild-nl"
-    key    = "example-ec2-launch-template/terraform.tfstate"
+    key    = "ec2/launch-template/example/terraform.tfstate"
     region = "eu-west-2"
+  }
+}
+
+locals {
+  tags = {
+    Environment = var.env
+    Application = var.app_name
   }
 }
 
@@ -17,23 +24,14 @@ resource "aws_launch_template" "spot_fleet_fleet_launch_template" {
   user_data               = var.ec2_user_data
   instance_type           = var.ec2_instance_type
   disable_api_termination = false
-  tags = {
-    Environment = var.env
-    Application = var.app_name
-  }
+  tags = local.tags
   tag_specifications {
     resource_type = "volume"
-    tags = {
-      Environment = var.env
-      Application = var.app_name
-    }
+    tags = local.tags
   }
   tag_specifications {
     resource_type = "instance"
-    tags = {
-      Environment = var.env
-      Application = var.app_name
-    }
+    tags = local.tags
   }
   name = "${var.app_name}-spot-fleet-launch-template"
   /*network_interfaces {
@@ -93,10 +91,7 @@ resource "aws_lb_target_group" "target_group" {
   port     = var.port
   protocol = var.alb_protocol
   vpc_id   = var.vpc_id
-  tags = {
-    Environment = var.env
-    Application = var.app_name
-  }
+  tags = local.tags
 }
 
 resource "aws_security_group" "load_balancer_sg" {
@@ -110,10 +105,7 @@ resource "aws_security_group" "load_balancer_sg" {
     protocol  = "tcp"
     to_port   = 0
   }
-  tags = {
-    Environment = var.env
-    Application = var.app_name
-  }
+  tags = local.tags
 }
 
 resource "aws_security_group" "instance_sg" {
@@ -128,10 +120,7 @@ resource "aws_security_group" "instance_sg" {
     protocol  = "tcp"
     to_port   = 0
   }
-  tags = {
-    Environment = var.env
-    Application = var.app_name
-  }
+  tags = local.tags
   lifecycle {
     create_before_destroy = true
   }
@@ -153,10 +142,7 @@ resource "aws_lb" "load_balancer" {
   security_groups            = [aws_security_group.load_balancer_sg.id]
   enable_deletion_protection = false
   ip_address_type            = "ipv4"
-  tags = {
-    Environment = var.env
-    Application = var.app_name
-  }
+  tags = local.tags
 }
 
 module "rg" {
