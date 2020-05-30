@@ -79,29 +79,3 @@ resource "aws_ssm_maintenance_window_task" "tasks" {
     values = [length(var.instance_ids) == 0 ? aws_ssm_maintenance_window_target.target_tag[0].id : aws_ssm_maintenance_window_target.target_ids[0].id]
   }
 }
-
-//variable "role_name" {
-//  default = "SSMServiceRole"
-//  type = string
-//}
-
-
-//module "role" {
-//  source = "../aws-iam-role"
-//  app_name = var.app_name
-//  name = var.role_name
-//  principal = {
-//    Service = "ssm.amazonaws.com"
-//  }
-//  policies = [
-//    "AmazonEC2RoleforSSM",
-//    "CloudWatchAgentServerPolicy",
-//    "AmazonSSMManagedInstanceCore",
-//    "AmazonSSMAutomationRole",
-//  ]
-//}
-
-//resource "aws_ssm_activation" "activations" {
-//  iam_role = module.role.role.name
-//  count = 3
-//}
