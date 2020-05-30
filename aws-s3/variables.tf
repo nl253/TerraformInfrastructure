@@ -1,4 +1,4 @@
-variable "bucket_name" {
+variable "name" {
   type = string
 }
 
@@ -8,6 +8,7 @@ variable "app_name" {
 
 variable "logging_bucket" {
   type = string
+  default = "logs-nl"
 }
 
 variable "env" {

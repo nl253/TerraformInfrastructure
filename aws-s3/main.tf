@@ -1,20 +1,7 @@
-provider "aws" {
-  region  = "eu-west-2"
-  profile = "ma"
-}
-
-terraform {
-  backend "s3" {
-    bucket = "codebuild-nl"
-    key    = "example-s3/terraform.tfstate"
-    region = "eu-west-2"
-  }
-}
-
 data "aws_caller_identity" "id" {}
 
 resource "aws_s3_bucket" "bucket" {
-  bucket        = var.bucket_name
+  bucket        = var.name
   force_destroy = true
 
   tags = {
@@ -23,7 +10,7 @@ resource "aws_s3_bucket" "bucket" {
   }
   logging {
     target_bucket = var.logging_bucket
-    target_prefix = var.bucket_name
+    target_prefix = var.name
   }
 
   server_side_encryption_configuration {
@@ -56,10 +43,4 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
       }
     ]
   })
-}
-
-module "rg" {
-  source   = "../aws-resource-group"
-  app_name = var.app_name
-  env      = var.env
 }
