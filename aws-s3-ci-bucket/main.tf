@@ -6,8 +6,15 @@ provider "aws" {
 terraform {
   backend "s3" {
     bucket = "codebuild-nl"
-    key    = "ci-bucket/terraform.tfstate"
+    key    = "s3/bucket/ci/terraform.tfstate"
     region = "eu-west-2"
+  }
+}
+
+locals {
+  tags = {
+    Application = var.app_name
+    Environment = var.env
   }
 }
 
@@ -46,6 +53,7 @@ resource "aws_s3_bucket" "bucket" {
     enabled    = true
     mfa_delete = false
   }
+  tags = local.tags
   server_side_encryption_configuration {
     rule {
       apply_server_side_encryption_by_default {

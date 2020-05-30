@@ -11,6 +11,13 @@ terraform {
   }
 }
 
+locals {
+  tags = {
+    Application = var.app_name
+    Environment = var.env
+  }
+}
+
 data "aws_caller_identity" "id" {}
 
 resource "aws_s3_bucket" "bucket" {
@@ -55,6 +62,7 @@ resource "aws_s3_bucket" "bucket" {
       storage_class = "ONEZONE_IA"
     }
   }
+  tags = local.tags
   policy = jsonencode(
     {
       Id = "Policy1589018326365"
