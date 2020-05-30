@@ -11,16 +11,6 @@ terraform {
   }
 }
 
-variable "app_name" {
-  default = "ssm"
-  type    = string
-}
-
-variable "env" {
-  type    = string
-  default = "dev"
-}
-
 module "maintenance" {
   source   = "../aws-ssm-maintenance"
   app_name = var.app_name

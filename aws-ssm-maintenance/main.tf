@@ -1,16 +1,3 @@
-provider "aws" {
-  region  = "eu-west-2"
-  profile = "ma"
-}
-
-terraform {
-  backend "s3" {
-    bucket = "codebuild-nl"
-    key    = "example-rds/terraform.tfstate"
-    region = "eu-west-2"
-  }
-}
-
 resource "aws_ssm_maintenance_window" "window" {
   cutoff   = 1
   duration = 3
