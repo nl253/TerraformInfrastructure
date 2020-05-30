@@ -13,7 +13,6 @@ terraform {
 
 data "aws_caller_identity" "id" {}
 
-
 resource "aws_spot_instance_request" "vm" {
   subnet_id                       = var.subnet_id
   ami                             = var.ami

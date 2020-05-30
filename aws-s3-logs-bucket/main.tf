@@ -90,3 +90,9 @@ module "rg" {
   app_name = var.app_name
   env      = var.env
 }
+
+module "budget" {
+  source   = "../aws-budget-project"
+  amount   = 5
+  app_name = var.app_name
+}
