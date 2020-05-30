@@ -11,6 +11,13 @@ terraform {
   }
 }
 
+locals {
+  tags = {
+    Application = var.app_name
+    Environment = var.env
+  }
+}
+
 data "aws_caller_identity" "id" {}
 
 resource "aws_spot_instance_request" "vm" {
@@ -30,13 +37,11 @@ resource "aws_spot_instance_request" "vm" {
   instance_type                   = var.instance_type
   key_name                        = var.key_pair_name
   instance_interruption_behaviour = "stop"
-  tags = {
+  tags = merge(local.tags, {
     Name                   = var.app_name
-    Application            = var.app_name
-    Environment            = var.env
     "scheduled-start-stop" = "18 - 22"
     "personal-vm"          = "1"
-  }
+  })
   tenancy = "default"
 
   private_ip             = "10.0.183.236"
@@ -75,25 +80,21 @@ resource "aws_ebs_volume" "volume" {
     prevent_destroy = true
   }
   availability_zone = "${var.region}b"
-  tags = {
+  tags = merge(local.tags, {
     Name                     = "${var.app_name}-volume"
-    Application              = var.app_name
-    Environment              = var.env
     "personal-vm"            = "1"
     "volume-snapshot-policy" = "enabled"
-  }
+  })
 }
 
 resource "aws_placement_group" "placement" {
   name     = "${var.app_name}-placement-group"
   strategy = "cluster"
-  tags = {
-    Application              = var.app_name
-    Environment              = var.env
+  tags = merge(local.tags, {
     Name                     = "${var.app_name}-placement-group"
     "personal-vm"            = "1"
     "volume-snapshot-policy" = "enabled"
-  }
+  })
 }
 
 resource "aws_security_group" "sg" {
@@ -101,12 +102,10 @@ resource "aws_security_group" "sg" {
   name                   = "${var.app_name}-security-group"
   revoke_rules_on_delete = true
   vpc_id                 = var.vpc_id
-  tags = {
-    Application   = var.app_name
-    Environment   = var.env
+  tags = merge(local.tags, {
     Name          = "${var.app_name}-security-group"
     "personal-vm" = "1"
-  }
+  })
   ingress {
     cidr_blocks      = ["0.0.0.0/0"]
     description      = "Allow SSH access."
@@ -143,12 +142,10 @@ resource "aws_eip" "ip" {
   }
   public_ipv4_pool = "amazon"
   vpc              = true
-  tags = {
-    Application   = var.app_name
-    Environment   = var.env
+  tags = merge(local.tags, {
     Name          = "${var.app_name}-ip"
     "personal-vm" = "1"
-  }
+  })
 }
 
 resource "aws_eip_association" "ip_association" {
