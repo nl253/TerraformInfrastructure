@@ -7,7 +7,14 @@ terraform {
   backend "s3" {
     region = "eu-west-2"
     bucket = "codebuild-nl"
-    key    = "jenkins/terraform.tfstate"
+    key    = "ecs/fargate/jenkins/terraform.tfstate"
+  }
+}
+
+locals {
+  tags = {
+    Application = var.app_name
+    Environment = var.env
   }
 }
 
@@ -105,7 +112,7 @@ module "route53_health_check" {
   app_name = var.app_name
   env      = var.env
   ports    = [80, 50000]
-  domain      = "${var.app_name}.${substr(data.aws_route53_zone.route53_hosted_zone.name, 0, length(data.aws_route53_zone.route53_hosted_zone.name) - 1)}"
+  domain   = "${var.app_name}.${substr(data.aws_route53_zone.route53_hosted_zone.name, 0, length(data.aws_route53_zone.route53_hosted_zone.name) - 1)}"
 }
 
 resource "aws_route53_record" "dns_records" {

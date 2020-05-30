@@ -5,10 +5,7 @@ resource "aws_ecs_cluster" "cluster" {
     name  = "containerInsights"
     value = "enabled"
   }
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }
 
 resource "aws_ecs_service" "service" {
@@ -77,8 +74,5 @@ resource "aws_ecs_task_definition" "task" {
       root_directory = "/"
     }
   }
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags = local.tags
 }
