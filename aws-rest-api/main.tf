@@ -13,7 +13,7 @@ terraform {
 
 locals {
   api_name = "${var.app_name}-rest-api"
-  stage = var.env
+  stage    = var.env
   tags = {
     Application = var.app_name
     Environment = var.env
@@ -21,24 +21,24 @@ locals {
 }
 
 module "lambda" {
-  source   = "../aws-lambda"
-  name = "${var.app_name}-lambda-func1"
-  app_name = var.app_name
-  source_dir     = "${path.module}/code"
-  invoker_arn = "${aws_api_gateway_rest_api.api.execution_arn}/*/*/*"
+  source            = "../aws-lambda"
+  name              = "${var.app_name}-lambda-func1"
+  app_name          = var.app_name
+  source_dir        = "${path.module}/code"
+  invoker_arn       = "${aws_api_gateway_rest_api.api.execution_arn}/*/*/*"
   invoker_principal = "apigateway.amazonaws.com"
 }
 
 module "budget" {
-  source = "../aws-budget-project"
-  amount = 5
+  source   = "../aws-budget-project"
+  amount   = 5
   app_name = var.app_name
 }
 
 module "rg" {
-  source = "../aws-resource-group"
+  source   = "../aws-resource-group"
   app_name = var.app_name
-  env = var.env
+  env      = var.env
 }
 
 resource "aws_api_gateway_rest_api" "api" {
@@ -47,21 +47,21 @@ resource "aws_api_gateway_rest_api" "api" {
   endpoint_configuration {
     types = ["REGIONAL"]
   }
-  body = file("api.yaml")
+  body               = file("api.yaml")
   binary_media_types = var.binary_mimes
-  tags = local.tags
+  tags               = local.tags
 }
 
 resource "aws_api_gateway_deployment" "deployment" {
   rest_api_id = aws_api_gateway_rest_api.api.id
-//  stage_name  = local.stage
+  //  stage_name  = local.stage
 }
 
 resource "aws_api_gateway_stage" "stage" {
-  stage_name    = local.stage
-  rest_api_id   = aws_api_gateway_rest_api.api.id
-  deployment_id = aws_api_gateway_deployment.deployment.id
-  tags = local.tags
+  stage_name           = local.stage
+  rest_api_id          = aws_api_gateway_rest_api.api.id
+  deployment_id        = aws_api_gateway_deployment.deployment.id
+  tags                 = local.tags
   xray_tracing_enabled = true
-  variables = local.tags
+  variables            = local.tags
 }

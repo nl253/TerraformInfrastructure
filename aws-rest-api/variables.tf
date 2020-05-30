@@ -9,7 +9,7 @@ variable "env" {
 }
 
 variable "app_name" {
-  type = string
+  type    = string
   default = "test-api-rest-app-123551"
 }
 

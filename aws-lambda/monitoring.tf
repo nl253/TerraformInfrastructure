@@ -19,7 +19,7 @@ module "alarm_duration" {
   metric = "Duration"
   service = "AWS/Lambda"
   statistic = "Average"
-  threshold = var.max_execution_duration
+  threshold = max(3, ceil(var.max_execution_duration / 2))
   unit = "Seconds"
   app_name = var.app_name
   evaluation_periods = 1

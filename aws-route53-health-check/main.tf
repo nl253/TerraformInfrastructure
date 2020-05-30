@@ -3,6 +3,11 @@ resource "aws_route53_health_check" "health_check" {
   fqdn              = var.domain
   type              = var.type
   reference_name    = "${substr(replace(replace(replace(var.app_name, "-", ""), "_", ""), " ", ""), 0, 22)}-dns"
+  regions = [
+    "eu-west-1",
+    "sa-east-1",
+    "us-west-2",
+  ]
   measure_latency   = true
   resource_path     = var.path
   failure_threshold = "${var.max_failures}"
