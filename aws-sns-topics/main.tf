@@ -34,7 +34,7 @@ variable "region" {
 }
 
 variable "topics" {
-  type = list(string)
+  type    = list(string)
   default = ["deployment", "account info", "failure", "consumption warning"]
 }
 
@@ -45,10 +45,10 @@ resource "aws_sns_topic" "topics" {
   kms_master_key_id                        = replace(var.topics[count.index], " ", "-") == "consumption-warning" ? null : "alias/aws/sns"
   lambda_success_feedback_sample_rate      = 0
   name                                     = replace(var.topics[count.index], " ", "-")
-  count = length(var.topics)
+  count                                    = length(var.topics)
   policy = jsonencode(
     {
-      Id = "__default_policy_ID"
+      Id = "SNSServicePolicyFor${replace(upper(var.topics[count.index]), " ", "")}"
       Statement = [
         {
           Action = var.action
