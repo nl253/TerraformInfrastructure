@@ -17,3 +17,8 @@ variable "self" {
 variable "internet" {
   type = bool
 }
+
+variable "vpc_id" {
+  type = string
+  default = "vpc-96542efe"
+}

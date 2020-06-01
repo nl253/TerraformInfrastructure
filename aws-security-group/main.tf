@@ -1,6 +1,7 @@
 resource "aws_security_group" "security_group" {
   name                   = "${var.app_name}-security-group"
   revoke_rules_on_delete = true
+  vpc_id                 = var.vpc_id
   tags = {
     Application = var.app_name
     Environment = var.env
