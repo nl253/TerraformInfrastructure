@@ -28,13 +28,14 @@ resource "aws_network_interface" "eni" {
 
 resource "aws_launch_template" "launch_template" {
   image_id                = var.ec2_image_id
+
   user_data               = base64encode(<<EOF
 #!/bin/bash
 apt update
-apt install -y git nfs-{common,kernel-server} curl wget openjdk-8-jdk vim
+apt install -y git nfs-{common,kernel-server} curl wget openjdk-8-jdk vim sed
 
-snap install docker
-snap start docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
 
 wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | apt-key add -
 sh -c 'echo deb https://pkg.jenkins.io/debian binary/ > \
@@ -46,6 +47,15 @@ JENKINS_HOME="/var/lib/jenkins"
 rm -r -f "$JENKINS_HOME"
 mkdir -p "$JENKINS_HOME"
 mount -t nfs -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${module.efs.efs.id}.efs.${var.region}.amazonaws.com:/ "$JENKINS_HOME"
+
+cat /etc/default/jenkins | sed -E 's/^\s*JENKINS_USER=[^=]*/JENKINS_USER=root/' | sed -E 's/^\s*JENKINS_GROUP=[^=]*/JENKINS_GROUP=root/' > /tmp/jenkins-pre
+cat /tmp/jenkins-pre | sed -E 's/^\s*JAVA_ARGS=.*/JAVA_ARGS="-Djava.awt.headless=true -Duser.timezone=Europe/London"/' > /tmp/jenkins
+
+rm /etc/default/jenkins
+cp /tmp/jenkins /etc/default/jenkins
+
+systemctl restart jenkins.service
+
 EOF
 )
   key_name                = var.key_pair_name
@@ -75,7 +85,7 @@ EOF
   block_device_mappings {
     device_name = var.ebs_device_name
     ebs {
-      delete_on_termination = false
+      delete_on_termination = true
       volume_size           = var.ebs_size
       encrypted             = var.ebs_encrypted
     }
