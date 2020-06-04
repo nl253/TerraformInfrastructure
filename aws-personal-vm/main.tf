@@ -13,9 +13,14 @@ terraform {
 
 locals {
   tags = {
-    Application = var.app_name
-    Environment = var.env
+    "personal-vm" = "1"
+    Application   = var.app_name
+    Environment   = var.env
   }
+}
+
+data "aws_route53_zone" "dns_zone" {
+  zone_id = var.route53_zone_id
 }
 
 data "aws_caller_identity" "id" {}
@@ -33,20 +38,19 @@ resource "aws_spot_instance_request" "vm" {
   monitoring                      = true
   get_password_data               = false
   hibernation                     = false
-  iam_instance_profile            = "ecsInstanceRole"
+  iam_instance_profile            = aws_iam_instance_profile.profile.name
   instance_type                   = var.instance_type
   key_name                        = var.key_pair_name
+  user_data                       = var.user_data
   instance_interruption_behaviour = "stop"
   tags = merge(local.tags, {
-    Name                   = var.app_name
-    "scheduled-start-stop" = "18 - 22"
-    "personal-vm"          = "1"
+    Name = var.app_name
   })
   tenancy = "default"
 
   private_ip             = "10.0.183.236"
   source_dest_check      = true
-  vpc_security_group_ids = [aws_security_group.sg.id]
+  vpc_security_group_ids = [module.sg.security_group.id]
 
   credit_specification {
     cpu_credits = "unlimited"
@@ -59,7 +63,6 @@ resource "aws_spot_instance_request" "vm" {
   }
 
   spot_price = "0.022500"
-  user_data  = var.user_data
 }
 
 //resource "aws_volume_attachment" "volume_attachment" {
@@ -82,7 +85,6 @@ resource "aws_ebs_volume" "volume" {
   availability_zone = "${var.region}b"
   tags = merge(local.tags, {
     Name                     = "${var.app_name}-volume"
-    "personal-vm"            = "1"
     "volume-snapshot-policy" = "enabled"
   })
 }
@@ -91,49 +93,8 @@ resource "aws_placement_group" "placement" {
   name     = "${var.app_name}-placement-group"
   strategy = "cluster"
   tags = merge(local.tags, {
-    Name                     = "${var.app_name}-placement-group"
-    "personal-vm"            = "1"
-    "volume-snapshot-policy" = "enabled"
+    Name = "${var.app_name}-placement-group"
   })
-}
-
-resource "aws_security_group" "sg" {
-  description            = "Allows SSH access."
-  name                   = "${var.app_name}-security-group"
-  revoke_rules_on_delete = true
-  vpc_id                 = var.vpc_id
-  tags = merge(local.tags, {
-    Name          = "${var.app_name}-security-group"
-    "personal-vm" = "1"
-  })
-  ingress {
-    cidr_blocks      = ["0.0.0.0/0"]
-    description      = "Allow SSH access."
-    from_port        = 22
-    ipv6_cidr_blocks = []
-    prefix_list_ids  = []
-    protocol         = "tcp"
-    self             = false
-    to_port          = 22
-  }
-  egress {
-    cidr_blocks      = ["0.0.0.0/0"]
-    from_port        = 0
-    ipv6_cidr_blocks = []
-    prefix_list_ids  = []
-    protocol         = "-1"
-    self             = false
-    to_port          = 0
-  }
-  ingress {
-    cidr_blocks      = ["0.0.0.0/0"]
-    from_port        = 0
-    ipv6_cidr_blocks = []
-    prefix_list_ids  = []
-    protocol         = "-1"
-    self             = true
-    to_port          = 0
-  }
 }
 
 resource "aws_eip" "ip" {
@@ -143,8 +104,7 @@ resource "aws_eip" "ip" {
   public_ipv4_pool = "amazon"
   vpc              = true
   tags = merge(local.tags, {
-    Name          = "${var.app_name}-ip"
-    "personal-vm" = "1"
+    Name = "${var.app_name}-ip"
   })
 }
 
@@ -157,15 +117,74 @@ resource "aws_efs_file_system" "efs" {
   lifecycle {
     prevent_destroy = true
   }
+  lifecycle_policy {
+    transition_to_ia = "AFTER_30_DAYS"
+  }
   provisioned_throughput_in_mibps = 0
   throughput_mode                 = "bursting"
   performance_mode                = "generalPurpose"
+  tags = merge(local.tags, {
+    Name = "${var.app_name}-fs"
+  })
 }
 
 resource "aws_efs_mount_target" "efs_mount_target" {
   file_system_id  = aws_efs_file_system.efs.id
   subnet_id       = var.subnet_id
-  security_groups = [aws_security_group.sg.id]
+  security_groups = [module.sg.security_group.id]
+}
+
+resource "aws_route53_record" "dns_records" {
+  name = [var.app_name, "linux"][count.index]
+  type    = "A"
+  ttl     = "300"
+  zone_id = var.route53_zone_id
+  records = [aws_eip.ip.public_ip]
+  count = 2
+}
+
+module "role" {
+  source   = "../aws-iam-role"
+  app_name = var.app_name
+  name     = "${substr(lower(replace(replace(replace(var.app_name, "-", ""), "_", ""), "/", "")), 0, 10)}instancerole"
+  policies = ["arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"]
+  principal = {
+    Service = "ec2.amazonaws.com"
+  }
+}
+
+resource "aws_iam_instance_profile" "profile" {
+  name = "${module.role.role.name}-profile"
+  role = module.role.role.name
+}
+
+module "sg" {
+  source   = "../aws-security-group"
+  app_name = var.app_name
+  env      = var.env
+  vpc_id = var.vpc_id
+  internet = true
+  rules = [
+    {
+      type     = "ingress"
+      cidr     = "0.0.0.0/0"
+      protocol = "tcp"
+      port     = 22
+    },
+    {
+      type     = "ingress"
+      protocol = "tcp"
+      port     = 111
+      cidr     = "0.0.0.0/0"
+    },
+    {
+      type     = "ingress"
+      protocol = "tcp"
+      port     = 2049
+      cidr     = "0.0.0.0/0"
+    }
+  ]
+  self = true
 }
 
 module "budget" {

@@ -18,6 +18,11 @@ variable "app_name" {
   type    = string
 }
 
+variable "route53_zone_id" {
+  type    = string
+  default = "Z0336293PW1VCW37F5HY"
+}
+
 variable "env" {
   default = "dev"
   type    = string
@@ -53,4 +58,7 @@ variable "cpu_threads_per_core" {
   default = 2
 }
 
-
+variable "efs_mount_point" {
+  type = string
+  default = "/data"
+}
