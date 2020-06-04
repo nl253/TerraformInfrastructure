@@ -13,6 +13,11 @@ variable "vpc_id" {
   default = "vpc-0dc8f17938055dc89"
 }
 
+variable "mount_point" {
+  type = string
+  default = "/data"
+}
+
 variable "app_name" {
   default = "personal-vm"
   type    = string
@@ -70,7 +75,7 @@ variable "private_ip" {
 
 variable "spot_price" {
   type = string
-  default = "0.0175"
+  default = "0.0178"
 }
 
 variable "ebs_volume_size" {
@@ -86,4 +91,9 @@ variable "ebs_iops" {
 variable "budget" {
   type = number
   default = 10
+}
+
+variable "schedule" {
+  default = "18 - 22"
+  type = string
 }
