@@ -48,7 +48,7 @@ resource "aws_spot_instance_request" "vm" {
   })
   tenancy = "default"
 
-  private_ip             = "10.0.183.236"
+  private_ip             = var.private_ip
   source_dest_check      = true
   vpc_security_group_ids = [module.sg.security_group.id]
 
@@ -62,17 +62,17 @@ resource "aws_spot_instance_request" "vm" {
     http_tokens                 = "optional"
   }
 
-  spot_price = "0.022500"
+  spot_price = var.spot_price
 }
 
 resource "aws_ebs_volume" "volume" {
-  iops                 = 100
+  iops                 = var.ebs_iops
   encrypted            = true
   multi_attach_enabled = false
   type                 = "gp2"
   kms_key_id           = "arn:aws:kms:${var.region}:${data.aws_caller_identity.id.account_id}:key/b8b33341-1904-4f3a-ab78-089fa8646459"
   outpost_arn          = ""
-  size                 = 30
+  size                 = var.ebs_volume_size
   lifecycle {
     prevent_destroy = true
   }
@@ -183,7 +183,7 @@ module "sg" {
 
 module "budget" {
   source   = "../aws-budget-project"
-  amount   = 10
+  amount   = var.budget
   app_name = var.app_name
 }
 

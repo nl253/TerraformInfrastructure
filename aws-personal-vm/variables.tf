@@ -62,3 +62,28 @@ variable "efs_mount_point" {
   type = string
   default = "/data"
 }
+
+variable "private_ip" {
+  type = string
+  default = "10.0.183.236"
+}
+
+variable "spot_price" {
+  type = string
+  default = "0.0175"
+}
+
+variable "ebs_volume_size" {
+  type = number
+  default = 30
+}
+
+variable "ebs_iops" {
+  type = number
+  default = 100
+}
+
+variable "budget" {
+  type = number
+  default = 10
+}
