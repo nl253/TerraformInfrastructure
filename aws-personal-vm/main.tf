@@ -65,12 +65,6 @@ resource "aws_spot_instance_request" "vm" {
   spot_price = "0.022500"
 }
 
-//resource "aws_volume_attachment" "volume_attachment" {
-//  device_name = "/dev/sda2"
-//  instance_id = aws_spot_instance_request.vm.spot_instance_id
-//  volume_id   = aws_ebs_volume.volume.id
-//}
-
 resource "aws_ebs_volume" "volume" {
   iops                 = 100
   encrypted            = true
