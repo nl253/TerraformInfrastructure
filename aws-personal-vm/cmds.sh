@@ -16,13 +16,13 @@ region="eu-west-2"
 efs_mount_point="/data"
 device="/dev/sda1"
 
-sleep 80
+sleep 120
 
 aws ec2 detach-volume --instance-id "${instance_id}" --volume-id "${old_volume_id}"
 aws ec2 delete-volume --volume-id "${old_volume_id}"
 aws ec2 attach-volume --instance-id "${instance_id}" --volume-id "${new_volume_id}" --device "${device}"
 
-sleep 80
+sleep 120
 
 aws ec2 start-instances --instance-ids "${instance_id}"
 
