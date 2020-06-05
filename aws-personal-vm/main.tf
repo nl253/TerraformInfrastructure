@@ -13,9 +13,8 @@ terraform {
 
 locals {
   tags = {
-    "personal-vm" = "1"
-    Application   = var.app_name
-    Environment   = var.env
+    Application = var.app_name
+    Environment = var.env
   }
 }
 
@@ -26,9 +25,9 @@ data "aws_route53_zone" "dns_zone" {
 data "aws_caller_identity" "id" {}
 
 resource "aws_network_interface" "network_interface" {
-  subnet_id = var.subnet_id
-  source_dest_check      = true
-  security_groups = [module.sg.security_group.id]
+  subnet_id         = var.subnet_id
+  source_dest_check = true
+  security_groups   = [module.sg.security_group.id]
   tags = merge(local.tags, {
     Name = "${var.app_name}-eni"
   })
@@ -42,13 +41,13 @@ resource "aws_eip" "ip" {
 }
 
 resource "aws_eip_association" "ip_association" {
-  allocation_id = aws_eip.ip.id
+  allocation_id        = aws_eip.ip.id
   network_interface_id = aws_network_interface.network_interface.id
 }
 
 resource "aws_spot_instance_request" "vm" {
   network_interface {
-    device_index = 0
+    device_index         = 0
     network_interface_id = aws_network_interface.network_interface.id
   }
   ami                             = var.ami
@@ -83,15 +82,19 @@ resource "aws_spot_instance_request" "vm" {
   }
 
   provisioner "local-exec" {
-    interpreter = ["bash", "-c"]
-    command = <<EOF
+    interpreter = ["bash", "-v", "-c"]
+    command     = <<EOF
 sleep 30
 
 set -e
 
 aws ec2 stop-instances --instance-ids ${aws_spot_instance_request.vm.spot_instance_id}
 
-sleep 120
+sleep 5
+
+until [[ "$(aws --output text ec2 describe-instances --filters Name=instance-id,Values=${aws_spot_instance_request.vm.spot_instance_id} --query Reservations[0].Instances[0].State.Name)" == stopped ]]; do
+ sleep 5
+done
 
 if [[ ${aws_spot_instance_request.vm.root_block_device[0].volume_id} == ${aws_ebs_volume.volume.id} ]]; then
   echo "something went wrong - old_volume_id ${aws_spot_instance_request.vm.root_block_device[0].volume_id} is the same as new"
@@ -104,9 +107,23 @@ aws ec2 detach-volume --instance-id ${aws_spot_instance_request.vm.spot_instance
 aws ec2 delete-volume --volume-id ${aws_spot_instance_request.vm.root_block_device[0].volume_id}
 aws ec2 attach-volume --instance-id ${aws_spot_instance_request.vm.spot_instance_id} --volume-id ${aws_ebs_volume.volume.id} --device /dev/sda1
 
+sleep 5
+
+until [[ "$(aws --output text ec2 describe-volumes --filters Name=volume-id,Values=${aws_ebs_volume.volume.id} --query  Volumes[0].State)" == 'in-use' ]]; do
+ sleep 5
+done
+
+until [[ "$(aws --output text ec2 describe-volumes --filters Name=volume-id,Values=${aws_ebs_volume.volume.id} --query  Volumes[0].Attachments[0].State)" == attached ]]; do
+ sleep 5
+done
+
 sleep 120
 
 aws ec2 start-instances --instance-ids ${aws_spot_instance_request.vm.spot_instance_id}
+
+until [[ "$(aws --output text ec2 describe-instances --filters Name=instance-id,Values=${aws_spot_instance_request.vm.spot_instance_id} --query Reservations[0].Instances[0].State.Name)" == running ]]; do
+ sleep 5
+done
 
 sleep 60
 
@@ -135,8 +152,45 @@ resource "aws_ebs_volume" "volume" {
   availability_zone = "${var.region}b"
   tags = merge(local.tags, {
     Name                     = "${var.app_name}-volume"
-    "volume-snapshot-policy" = "enabled"
+    "${var.app_name}-volume-snapshot-policy" = "enabled"
   })
+}
+
+module "role_dlm" {
+  source = "../aws-iam-role"
+  policies = ["arn:aws:iam::aws:policy/service-role/AWSDataLifecycleManagerServiceRole"]
+  app_name = var.app_name
+  env = var.env
+  name = "${var.app_name}-ebs-snapshot-lifecycle-policy-dlm-role"
+  principal = {
+    Service = "dlm.amazonaws.com"
+  }
+}
+
+resource "aws_dlm_lifecycle_policy" "ebs_lifecycle_policy" {
+  description        = "${var.app_name}-snapshot-policy"
+  execution_role_arn = module.role_dlm.role.arn
+  policy_details {
+    resource_types = ["VOLUME"]
+    target_tags = {
+      "${var.app_name}-volume-snapshot-policy" = "enabled"
+    }
+    schedule {
+      name = "${var.app_name}-snapshot-policy-schedule"
+      tags_to_add = merge(local.tags, {
+        Name = "${var.app_name}-volume-snapshot"
+      })
+      create_rule {
+        interval      = 24
+        interval_unit = "HOURS"
+        times         = ["13:00"]
+      }
+      retain_rule {
+        count = 14
+      }
+    }
+  }
+  tags = local.tags
 }
 
 resource "aws_placement_group" "placement" {
@@ -169,12 +223,12 @@ resource "aws_efs_mount_target" "efs_mount_target" {
 }
 
 resource "aws_route53_record" "dns_records" {
-  name = [var.app_name, "linux"][count.index]
+  name    = [var.app_name, "linux"][count.index]
   type    = "A"
   ttl     = "30"
   zone_id = var.route53_zone_id
   records = [aws_eip.ip.public_ip]
-  count = 2
+  count   = 2
 }
 
 module "role" {
@@ -196,7 +250,7 @@ module "sg" {
   source   = "../aws-security-group"
   app_name = var.app_name
   env      = var.env
-  vpc_id = var.vpc_id
+  vpc_id   = var.vpc_id
   internet = true
   rules = [
     {

@@ -75,7 +75,7 @@ variable "private_ip" {
 
 variable "spot_price" {
   type = string
-  default = "0.0178"
+  default = "0.0165"
 }
 
 variable "ebs_volume_size" {
