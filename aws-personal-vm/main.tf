@@ -151,17 +151,17 @@ resource "aws_ebs_volume" "volume" {
   }
   availability_zone = "${var.region}b"
   tags = merge(local.tags, {
-    Name                     = "${var.app_name}-volume"
+    Name                                     = "${var.app_name}-volume"
     "${var.app_name}-volume-snapshot-policy" = "enabled"
   })
 }
 
 module "role_dlm" {
-  source = "../aws-iam-role"
+  source   = "../aws-iam-role"
   policies = ["arn:aws:iam::aws:policy/service-role/AWSDataLifecycleManagerServiceRole"]
   app_name = var.app_name
-  env = var.env
-  name = "${var.app_name}-ebs-snapshot-lifecycle-policy-dlm-role"
+  env      = var.env
+  name     = "${var.app_name}-ebs-snapshot-lifecycle-policy-dlm-role"
   principal = {
     Service = "dlm.amazonaws.com"
   }
