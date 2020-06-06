@@ -31,24 +31,23 @@ resource "aws_route_table" "vpc_route_table" {
 }
 
 resource "aws_security_group_rule" "vpc_sg_rule_inbound" {
-  from_port = 0
-  ipv6_cidr_blocks = []
-  protocol = "-1"
-  prefix_list_ids = []
-  security_group_id = aws_security_group.vpc_sg.id
+  from_port                = 0
+  ipv6_cidr_blocks         = []
+  protocol                 = "-1"
+  prefix_list_ids          = []
+  security_group_id        = aws_security_group.vpc_sg.id
   source_security_group_id = aws_security_group.vpc_sg.id
-  to_port = 0
-  type = "ingress"
+  to_port                  = 0
+  type                     = "ingress"
 }
 
-
 resource "aws_security_group_rule" "vpc_sg_rule_outbound" {
-  from_port = 0
-  protocol = "-1"
+  from_port        = 0
+  protocol         = "-1"
   ipv6_cidr_blocks = []
-  prefix_list_ids = []
-  to_port = 0
-  type = "egress"
+  prefix_list_ids  = []
+  to_port          = 0
+  type             = "egress"
   cidr_blocks = [
     "0.0.0.0/0",
   ]
@@ -59,7 +58,7 @@ resource "aws_security_group" "vpc_sg" {
   lifecycle {
     prevent_destroy = true
   }
-  description = "default VPC security group"
+  description            = "default VPC security group"
   name                   = "default"
   revoke_rules_on_delete = false
   vpc_id                 = aws_vpc.vpc.id
@@ -83,7 +82,7 @@ resource "aws_vpc_dhcp_options" "vpc_dhc_options" {
 
 resource "aws_vpc_dhcp_options_association" "vpc_dhcp_options_association" {
   dhcp_options_id = aws_vpc_dhcp_options.vpc_dhc_options.id
-  vpc_id = aws_vpc.vpc.id
+  vpc_id          = aws_vpc.vpc.id
 }
 
 resource "aws_vpc" "vpc" {
@@ -109,7 +108,7 @@ resource "aws_internet_gateway" "vpc_ig" {
 
 resource "aws_route_table_association" "vpc_subnet_route_table_association" {
   route_table_id = aws_route_table.vpc_route_table.id
-  subnet_id = aws_subnet.subnet_public.id
+  subnet_id      = aws_subnet.subnet_public.id
 }
 
 //resource "aws_route_table_association" "vpc_route_table_association_ig" {
@@ -119,7 +118,7 @@ resource "aws_route_table_association" "vpc_subnet_route_table_association" {
 
 resource "aws_main_route_table_association" "vpc_route_table_association" {
   route_table_id = aws_route_table.vpc_route_table.id
-  vpc_id = aws_vpc.vpc.id
+  vpc_id         = aws_vpc.vpc.id
 }
 
 resource "aws_subnet" "subnet_public" {
