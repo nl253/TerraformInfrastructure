@@ -108,13 +108,9 @@ module "sg" {
   vpc_id   = var.vpc_id
   env      = var.env
   internet = true
+  ssh = true
+  nfs = true
   rules = [
-    {
-      type     = "ingress"
-      cidr     = "0.0.0.0/0"
-      protocol = "tcp"
-      port     = 22
-    },
     {
       type     = "ingress"
       cidr     = "0.0.0.0/0"
@@ -133,18 +129,6 @@ module "sg" {
       protocol = "tcp"
       port     = 8000
     },
-    {
-      type     = "ingress"
-      protocol = "tcp"
-      port     = 111
-      cidr     = "0.0.0.0/0"
-    },
-    {
-      type     = "ingress"
-      protocol = "tcp"
-      port     = 2049
-      cidr     = "0.0.0.0/0"
-    }
   ]
   self = true
 }
