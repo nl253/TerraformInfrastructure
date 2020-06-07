@@ -20,6 +20,7 @@ locals {
 
 resource "aws_network_interface" "eni" {
   subnet_id = var.vpc_subnet_id
+  description = "Attached to new ${var.app_name}-instance-launch-template instances"
   tags = merge({
     Name = "${var.app_name}-eni"
   }, local.tags)
@@ -74,6 +75,7 @@ EOF
   tag_specifications {
     resource_type = "instance"
     tags = merge({
+      scheduled-start-stop = "9 - 23"
       Name = "${var.app_name}-instance"
     }, local.tags)
   }
