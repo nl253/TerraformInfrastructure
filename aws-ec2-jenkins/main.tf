@@ -32,6 +32,9 @@ resource "aws_launch_template" "launch_template" {
 
   user_data               = base64encode(<<EOF
 #!/bin/bash
+
+chmod a+w /tmp
+
 apt update
 apt install -y git nfs-{common,kernel-server} curl wget openjdk-8-jdk vim sed
 
@@ -50,7 +53,7 @@ mkdir -p "$JENKINS_HOME"
 mount -t nfs -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${module.efs.efs.id}.efs.${var.region}.amazonaws.com:/ "$JENKINS_HOME"
 
 cat /etc/default/jenkins | sed -E 's/^\s*JENKINS_USER=[^=]*/JENKINS_USER=root/' | sed -E 's/^\s*JENKINS_GROUP=[^=]*/JENKINS_GROUP=root/' > /tmp/jenkins-pre
-cat /tmp/jenkins-pre | sed -E 's/^\s*JAVA_ARGS=.*/JAVA_ARGS="-Djava.awt.headless=true -Duser.timezone=Europe/London"/' > /tmp/jenkins
+cat /tmp/jenkins-pre | sed -E 's/^\s*JAVA_ARGS=.*/JAVA_ARGS="-Djava.awt.headless=true -Duser.timezone=Europe\/London"/' > /tmp/jenkins
 
 rm /etc/default/jenkins
 cp /tmp/jenkins /etc/default/jenkins
