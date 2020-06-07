@@ -27,6 +27,25 @@ resource "aws_network_interface" "eni" {
   security_groups = [module.sg.security_group.id]
 }
 
+resource "aws_iam_instance_profile" "profile" {
+  name = "${module.role.role.name}-profile"
+  role = module.role.role.name
+}
+
+module "role" {
+  source   = "../aws-iam-role"
+  app_name = var.app_name
+  name     = "${substr(lower(replace(replace(replace(var.app_name, "-", ""), "_", ""), "/", "")), 0, 10)}instancerole"
+  policies = [
+    "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role",
+    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+    "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
+  ]
+  principal = {
+    Service = ["ssm.amazonaws.com", "ec2.amazonaws.com"]
+  }
+}
+
 resource "aws_launch_template" "launch_template" {
   image_id                = var.ec2_image_id
 
@@ -65,6 +84,9 @@ EOF
   key_name                = var.key_pair_name
   ebs_optimized           = true
   instance_type           = var.ec2_instance_type
+  iam_instance_profile {
+    name = aws_iam_instance_profile.profile.name
+  }
   disable_api_termination = false
   tags = merge({
     Name = "${var.app_name}-instance-launch-template"
@@ -78,7 +100,7 @@ EOF
   tag_specifications {
     resource_type = "instance"
     tags = merge({
-      scheduled-start-stop = "9 - 23"
+      scheduled-start-stop = "enabled"
       Name = "${var.app_name}-instance"
     }, local.tags)
   }
