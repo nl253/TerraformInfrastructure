@@ -30,6 +30,28 @@ resource "aws_security_group_rule" "rules_internet" {
   description       = "egress internet rule for ${aws_security_group.security_group.name}"
 }
 
+resource "aws_security_group_rule" "rules_ssh_internet" {
+  type              = "ingress"
+  from_port         = 22
+  cidr_blocks       = ["0.0.0.0/0"]
+  to_port           = 22
+  protocol          = "tcp"
+  security_group_id = aws_security_group.security_group.id
+  count             = var.ssh ? 1 : 0
+  description       = "ingress SSH rule for ${aws_security_group.security_group.name}"
+}
+
+resource "aws_security_group_rule" "rules_nfs_internet" {
+  type              = "ingress"
+  from_port         = [2049, 111][count.index]
+  cidr_blocks       = ["0.0.0.0/0"]
+  to_port           = [2049, 111][count.index]
+  protocol          = "tcp"
+  security_group_id = aws_security_group.security_group.id
+  count             = var.nfs ? 2 : 0
+  description       = "ingress NFS rule for ${aws_security_group.security_group.name}"
+}
+
 resource "aws_security_group_rule" "rules" {
   cidr_blocks       = [var.rules[count.index].cidr]
   from_port         = var.rules[count.index].port

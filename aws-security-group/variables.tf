@@ -19,6 +19,16 @@ variable "internet" {
 }
 
 variable "vpc_id" {
-  type = string
+  type    = string
   default = "vpc-96542efe"
+}
+
+variable "ssh" {
+  default = false
+  type    = bool
+}
+
+variable "nfs" {
+  default = false
+  type = bool
 }
