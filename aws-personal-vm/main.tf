@@ -12,17 +12,15 @@ terraform {
 }
 
 locals {
+  az              = "${var.region}b"
+  user            = "ubuntu"
+  user_path       = "/home/ubuntu"
+  ebs_device_name = "/dev/xvdb"
   tags = {
     Application = var.app_name
     Environment = var.env
   }
 }
-
-data "aws_route53_zone" "dns_zone" {
-  zone_id = var.route53_zone_id
-}
-
-data "aws_caller_identity" "id" {}
 
 resource "aws_network_interface" "network_interface" {
   subnet_id         = var.subnet_id
@@ -50,30 +48,67 @@ resource "aws_spot_instance_request" "vm" {
     device_index         = 0
     network_interface_id = aws_network_interface.network_interface.id
   }
-  ami                             = var.ami
-  wait_for_fulfillment            = true
-  availability_zone               = "${var.region}b"
-  placement_group                 = aws_placement_group.placement.placement_group_id
-  cpu_core_count                  = var.cpu_core_count
-  cpu_threads_per_core            = var.cpu_threads_per_core
-  disable_api_termination         = false
-  ebs_optimized                   = true
-  monitoring                      = true
-  get_password_data               = false
-  hibernation                     = false
-  iam_instance_profile            = aws_iam_instance_profile.profile.name
-  instance_type                   = var.instance_type
-  key_name                        = var.key_pair_name
-  user_data                       = var.user_data
+  ami                     = var.ami == null ? data.aws_ami.ami.image_id : var.ami
+  wait_for_fulfillment    = true
+  availability_zone       = local.az
+  placement_group         = aws_placement_group.placement.placement_group_id
+  cpu_core_count          = var.cpu_core_count
+  cpu_threads_per_core    = var.cpu_threads_per_core
+  disable_api_termination = false
+  ebs_optimized           = true
+  monitoring              = true
+  get_password_data       = false
+  hibernation             = false
+  iam_instance_profile    = aws_iam_instance_profile.profile.name
+  instance_type           = var.instance_type
+  key_name                = var.key_pair_name
+  user_data = base64encode(<<EOF
+#!/bin/bash
+
+set -e
+
+# EFS ${var.efs_mount_point}
+sudo mkdir -p ${var.efs_mount_point}
+sudo apt update
+sudo apt install -y git nfs-{common,kernel-server} curl wget {neo,}vim sed {core,find}utils python3 gawk nodejs ruby
+sudo mount -t nfs \
+           -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport \
+              ${aws_efs_file_system.efs.id}.efs.${var.region}.amazonaws.com:/ ${var.efs_mount_point}
+
+# EBS ${local.user_path}
+sudo rm -r -f ${local.user_path}
+sudo mkdir -p ${local.user_path}
+sudo mount ${local.ebs_device_name} ${local.user_path}
+sudo chown --recursive ${local.user}:${local.user} ${local.user_path}
+
+EOF
+  )
   instance_interruption_behaviour = "stop"
-  tags = merge(local.tags, {
-    Name = var.app_name
-  })
-  tenancy = "default"
+  tenancy                         = "default"
+
+  root_block_device {
+    volume_size           = 10
+    volume_type           = "gp2"
+    delete_on_termination = true
+    encrypted             = false
+    iops                  = var.ebs_iops
+  }
+
+  provisioner "local-exec" {
+    interpreter = ["bash", "-v", "-c"]
+    command = <<EOF
+aws ec2 create-tags --resources ${aws_spot_instance_request.vm.spot_instance_id} \
+                    --tags Key=scheduled-start-stop,Value=enabled Key=Application,Value=${var.app_name} Key=Environment,Value=${var.env} Key=Name,Value=${var.app_name}-instance
+EOF
+  }
 
   credit_specification {
     cpu_credits = "unlimited"
   }
+
+  volume_tags = merge({
+    Name = "${var.app_name}-root-volume"
+  }, local.tags)
 
   metadata_options {
     http_endpoint               = "enabled"
@@ -81,75 +116,30 @@ resource "aws_spot_instance_request" "vm" {
     http_tokens                 = "optional"
   }
 
-  provisioner "local-exec" {
-    interpreter = ["bash", "-v", "-c"]
-    command     = <<EOF
-sleep 30
-
-set -e
-
-aws ec2 stop-instances --instance-ids ${aws_spot_instance_request.vm.spot_instance_id}
-
-sleep 5
-
-until [[ "$(aws --output text ec2 describe-instances --filters Name=instance-id,Values=${aws_spot_instance_request.vm.spot_instance_id} --query Reservations[0].Instances[0].State.Name)" == stopped ]]; do
- sleep 5
-done
-
-if [[ ${aws_spot_instance_request.vm.root_block_device[0].volume_id} == ${aws_ebs_volume.volume.id} ]]; then
-  echo "something went wrong - old_volume_id ${aws_spot_instance_request.vm.root_block_device[0].volume_id} is the same as new"
-  echo "restarting instance ${aws_spot_instance_request.vm.spot_instance_id}"
-  aws ec2 start-instances --instance-ids ${aws_spot_instance_request.vm.spot_instance_id}
-  exit 1
-fi
-
-aws ec2 detach-volume --instance-id ${aws_spot_instance_request.vm.spot_instance_id} --volume-id ${aws_spot_instance_request.vm.root_block_device[0].volume_id}
-aws ec2 delete-volume --volume-id ${aws_spot_instance_request.vm.root_block_device[0].volume_id}
-aws ec2 attach-volume --instance-id ${aws_spot_instance_request.vm.spot_instance_id} --volume-id ${aws_ebs_volume.volume.id} --device /dev/sda1
-
-sleep 5
-
-until [[ "$(aws --output text ec2 describe-volumes --filters Name=volume-id,Values=${aws_ebs_volume.volume.id} --query  Volumes[0].State)" == 'in-use' ]]; do
- sleep 5
-done
-
-until [[ "$(aws --output text ec2 describe-volumes --filters Name=volume-id,Values=${aws_ebs_volume.volume.id} --query  Volumes[0].Attachments[0].State)" == attached ]]; do
- sleep 5
-done
-
-sleep 120
-
-aws ec2 start-instances --instance-ids ${aws_spot_instance_request.vm.spot_instance_id}
-
-until [[ "$(aws --output text ec2 describe-instances --filters Name=instance-id,Values=${aws_spot_instance_request.vm.spot_instance_id} --query Reservations[0].Instances[0].State.Name)" == running ]]; do
- sleep 5
-done
-
-sleep 60
-
-ssh -o StrictHostKeyChecking=no -i ~/.openssl/key-pair.pem ubuntu@${aws_eip.ip.public_ip} "sudo mkdir -p ${var.mount_point} && sudo apt update && sudo apt install -y git nfs-{common,kernel-server} curl wget vim sed && sudo mount -t nfs -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2,noresvport ${aws_efs_file_system.efs.id}.efs.${var.region}.amazonaws.com:/ ${var.mount_point}"
-
-aws ec2 create-tags --resources ${aws_spot_instance_request.vm.spot_instance_id} --tags "Key=Application,Value=${var.app_name}" "Key=Environment,Value=${var.env}" "Key=scheduled-start-stop,Value=${var.schedule}"
-
-EOF
-
-  }
+  tags = merge({
+    scheduled-start-stop = var.schedule
+    Name                 = "${var.app_name}-instance"
+  }, local.tags)
 
   spot_price = var.spot_price
 }
 
+resource "aws_volume_attachment" "volume_attachment" {
+  device_name = local.ebs_device_name
+  instance_id = aws_spot_instance_request.vm.spot_instance_id
+  volume_id   = aws_ebs_volume.volume.id
+}
+
 resource "aws_ebs_volume" "volume" {
-  iops                 = var.ebs_iops
-  encrypted            = true
-  multi_attach_enabled = false
-  type                 = "gp2"
-  kms_key_id           = "arn:aws:kms:${var.region}:${data.aws_caller_identity.id.account_id}:key/b8b33341-1904-4f3a-ab78-089fa8646459"
-  outpost_arn          = ""
-  size                 = var.ebs_volume_size
   lifecycle {
     prevent_destroy = true
   }
-  availability_zone = "${var.region}b"
+  iops                 = var.ebs_iops
+  encrypted            = false
+  multi_attach_enabled = false
+  type                 = "gp2"
+  size                 = var.ebs_volume_size
+  availability_zone    = local.az
   tags = merge(local.tags, {
     Name                                     = "${var.app_name}-volume"
     "${var.app_name}-volume-snapshot-policy" = "enabled"
@@ -183,7 +173,7 @@ resource "aws_dlm_lifecycle_policy" "ebs_lifecycle_policy" {
       create_rule {
         interval      = 24
         interval_unit = "HOURS"
-        times         = ["13:00"]
+        times         = ["00:00"]
       }
       retain_rule {
         count = 14
@@ -235,9 +225,13 @@ module "role" {
   source   = "../aws-iam-role"
   app_name = var.app_name
   name     = "${substr(lower(replace(replace(replace(var.app_name, "-", ""), "_", ""), "/", "")), 0, 10)}instancerole"
-  policies = ["arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"]
+  policies = [
+    "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role",
+    "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
+    "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
+  ]
   principal = {
-    Service = "ec2.amazonaws.com"
+    Service = ["ssm.amazonaws.com", "ec2.amazonaws.com"]
   }
 }
 
@@ -252,27 +246,10 @@ module "sg" {
   env      = var.env
   vpc_id   = var.vpc_id
   internet = true
-  rules = [
-    {
-      type     = "ingress"
-      cidr     = "0.0.0.0/0"
-      protocol = "tcp"
-      port     = 22
-    },
-    {
-      type     = "ingress"
-      protocol = "tcp"
-      port     = 111
-      cidr     = "0.0.0.0/0"
-    },
-    {
-      type     = "ingress"
-      protocol = "tcp"
-      port     = 2049
-      cidr     = "0.0.0.0/0"
-    }
-  ]
-  self = true
+  nfs      = true
+  ssh      = true
+  rules    = []
+  self     = true
 }
 
 module "budget" {

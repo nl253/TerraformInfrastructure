@@ -30,7 +30,7 @@ variable "ec2_image_id" {
 
 variable "key_pair_name" {
   type    = string
-  default = "key pair"
+  default = "mx"
 }
 
 variable "ec2_instance_type" {

@@ -13,8 +13,8 @@ variable "vpc_id" {
   default = "vpc-0dc8f17938055dc89"
 }
 
-variable "mount_point" {
-  type = string
+variable "efs_mount_point" {
+  type    = string
   default = "/data"
 }
 
@@ -40,7 +40,7 @@ variable "user_data" {
 
 variable "key_pair_name" {
   type    = string
-  default = "key pair"
+  default = "mx"
 }
 
 variable "instance_type" {
@@ -50,7 +50,7 @@ variable "instance_type" {
 
 variable "ami" {
   type    = string
-  default = "ami-006a0174c6c25ac06"
+  default = null
 }
 
 variable "cpu_core_count" {
@@ -63,37 +63,32 @@ variable "cpu_threads_per_core" {
   default = 2
 }
 
-variable "efs_mount_point" {
-  type = string
-  default = "/data"
-}
-
 variable "private_ip" {
-  type = string
+  type    = string
   default = "10.0.183.236"
 }
 
 variable "spot_price" {
-  type = string
+  type    = string
   default = "0.0165"
 }
 
 variable "ebs_volume_size" {
-  type = number
+  type    = number
   default = 30
 }
 
 variable "ebs_iops" {
-  type = number
+  type    = number
   default = 100
 }
 
 variable "budget" {
-  type = number
-  default = 10
+  type    = number
+  default = 10.0
 }
 
 variable "schedule" {
   default = "18 - 22"
-  type = string
+  type    = string
 }

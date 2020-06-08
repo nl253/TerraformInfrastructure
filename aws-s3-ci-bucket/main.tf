@@ -65,7 +65,7 @@ resource "aws_s3_bucket" "bucket" {
 
 module "budget" {
   source = "../aws-budget-project"
-  amount = 5
+  amount = 5.0
   app_name = var.app_name
 }
 

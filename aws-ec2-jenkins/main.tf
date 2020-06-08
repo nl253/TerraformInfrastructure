@@ -18,8 +18,10 @@ locals {
   }
 }
 
+data "aws_caller_identity" "id" {}
+
 resource "aws_network_interface" "eni" {
-  subnet_id = var.vpc_subnet_id
+  subnet_id   = var.vpc_subnet_id
   description = "Attached to new ${var.app_name}-instance-launch-template instances"
   tags = merge({
     Name = "${var.app_name}-eni"
@@ -32,11 +34,118 @@ resource "aws_iam_instance_profile" "profile" {
   role = module.role.role.name
 }
 
+resource "aws_iam_policy" "ssm_session_policy" {
+  name = "${var.app_name}-ssm-session-policy"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:StartSession",
+          "ssm:SendCommand"
+        ]
+        Resource = [
+          "arn:aws:ec2:*:*:instance/*",
+          "arn:aws:ssm:${var.region}:${data.aws_caller_identity.id.account_id}:document/SSM-SessionManagerRunShell"
+        ]
+        Condition = {
+          BoolIfExists = {
+            "ssm:SessionDocumentAccessCheck" = "true"
+          }
+        }
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ssm:DescribeSessions",
+          "ssm:GetConnectionStatus",
+          "ssm:DescribeInstanceInformation",
+          "ssm:DescribeInstanceProperties",
+          "ec2:DescribeInstances"
+        ],
+        Resource = "*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "ssm:TerminateSession"
+        ]
+        Resource = [
+          "arn:aws:ssm:*:*:session/ma-*",
+          "arn:aws:ssm:*:*:session/mx-*",
+          "arn:aws:ssm:*:*:session/md-*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_iam_policy" "ssm_session_admin_policy" {
+  name = "${var.app_name}-ssm-session-admin-policy"
+  policy = jsonencode(
+    {
+      Version = "2012-10-17",
+      Statement = [
+        {
+          Effect = "Allow"
+          Action = [
+            "ssm:StartSession",
+            "ssm:SendCommand"
+          ]
+          Resource = [
+            "arn:aws:ec2:*:*:instance/*"
+          ]
+          Condition = {
+            "StringLike" : {
+              "ssm:resourceTag/Name" : [
+                "${var.app_name}-instance"
+              ]
+            }
+          }
+        },
+        {
+          Effect = "Allow",
+          Action = [
+            "ssm:DescribeSessions",
+            "ssm:GetConnectionStatus",
+            "ssm:DescribeInstanceInformation",
+            "ssm:DescribeInstanceProperties",
+            "ec2:DescribeInstances"
+          ],
+          Resource = "*"
+        },
+        {
+          Effect = "Allow"
+          Action = [
+            "ssm:CreateDocument",
+            "ssm:UpdateDocument",
+            "ssm:GetDocument"
+          ]
+          Resource = "arn:aws:ssm:${var.region}:${data.aws_caller_identity.id.account_id}:document/SSM-SessionManagerRunShell"
+        },
+        {
+          Effect = "Allow"
+          Action = [
+            "ssm:TerminateSession"
+          ]
+          Resource = [
+            "arn:aws:ssm:*:*:session/ma-*",
+            "arn:aws:ssm:*:*:session/mx-*",
+            "arn:aws:ssm:*:*:session/md-*"
+          ]
+        }
+      ]
+  })
+}
+
 module "role" {
   source   = "../aws-iam-role"
   app_name = var.app_name
   name     = "${substr(lower(replace(replace(replace(var.app_name, "-", ""), "_", ""), "/", "")), 0, 10)}instancerole"
   policies = [
+    aws_iam_policy.ssm_session_admin_policy.arn,
+    aws_iam_policy.ssm_session_policy.arn,
     "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role",
     "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore",
     "arn:aws:iam::aws:policy/CloudWatchAgentServerPolicy",
@@ -47,9 +156,9 @@ module "role" {
 }
 
 resource "aws_launch_template" "launch_template" {
-  image_id                = var.ec2_image_id
+  image_id = var.ec2_image_id
 
-  user_data               = base64encode(<<EOF
+  user_data = base64encode(<<EOF
 #!/bin/bash
 
 chmod a+w /tmp
@@ -81,10 +190,30 @@ cp /tmp/jenkins /etc/default/jenkins
 systemctl restart jenkins.service
 
 EOF
-)
-  key_name                = var.key_pair_name
-  ebs_optimized           = true
-  instance_type           = var.ec2_instance_type
+  )
+  provisioner "local-exec" {
+    interpreter = ["bash", "-v", "-c"]
+    command     = <<EOF
+id=$(aws --output text ec2 describe-instances --filters Name=tag:Name,Values=${var.app_name}-instance Name=instance-state-name,Values=running --query Reservations[0].Instances[0].InstanceId)
+
+if [[ $id == None ]]; then
+  id=$(aws --output text ec2 describe-instances --filters Name=tag:Name,Values=${var.app_name}-instance Name=instance-state-name,Values=stopped --query Reservations[0].Instances[0].InstanceId)
+fi
+
+if [[ ! $id == None ]]; then
+  aws ec2 terminate-instances --instance-ids $id
+  sleep 10
+  status=$(aws ec2 --output text describe-instances --filters Name=instance-id,Values=i-0ac080c6fe6fdc985 --query Reservations[0].Instances[0].State.Name)
+  until [[ $status == terminated ]]; do
+    sleep 5
+  done
+  aws ec2 run-instances --launch-template '{ "LaunchTemplateName": "jenkins-launch-template", "Version": "$Latest" }'
+fi
+EOF
+  }
+  key_name      = var.key_pair_name
+  ebs_optimized = true
+  instance_type = var.ec2_instance_type
   iam_instance_profile {
     name = aws_iam_instance_profile.profile.name
   }
@@ -102,7 +231,7 @@ EOF
     resource_type = "instance"
     tags = merge({
       scheduled-start-stop = "enabled"
-      Name = "${var.app_name}-instance"
+      Name                 = "${var.app_name}-instance"
     }, local.tags)
   }
   name = "${var.app_name}-launch-template"
@@ -134,8 +263,8 @@ module "sg" {
   vpc_id   = var.vpc_id
   env      = var.env
   internet = true
-  ssh = true
-  nfs = true
+  ssh      = true
+  nfs      = true
   rules = [
     {
       type     = "ingress"
