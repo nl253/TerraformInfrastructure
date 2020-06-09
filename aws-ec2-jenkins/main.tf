@@ -12,6 +12,8 @@ terraform {
 }
 
 locals {
+  instance_name = "${var.app_name}-instance"
+  launch_template_name = "${var.app_name}-launch-template"
   tags = {
     Environment = var.env
     Application = var.app_name
@@ -22,7 +24,7 @@ data "aws_caller_identity" "id" {}
 
 resource "aws_network_interface" "eni" {
   subnet_id   = var.vpc_subnet_id
-  description = "Attached to new ${var.app_name}-instance-launch-template instances"
+  description = "Attached to new ${local.launch_template_name} instances"
   tags = merge({
     Name = "${var.app_name}-eni"
   }, local.tags)
@@ -99,7 +101,7 @@ resource "aws_iam_policy" "ssm_session_admin_policy" {
           Condition = {
             "StringLike" : {
               "ssm:resourceTag/Name" : [
-                "${var.app_name}-instance"
+                local.instance_name
               ]
             }
           }
@@ -194,20 +196,20 @@ EOF
   provisioner "local-exec" {
     interpreter = ["bash", "-v", "-c"]
     command     = <<EOF
-id=$(aws --output text ec2 describe-instances --filters Name=tag:Name,Values=${var.app_name}-instance Name=instance-state-name,Values=running --query Reservations[0].Instances[0].InstanceId)
+id=$(aws --output text ec2 describe-instances --filters Name=tag:Name,Values=${local.instance_name} Name=instance-state-name,Values=running --query Reservations[0].Instances[0].InstanceId)
 
 if [[ $id == None ]]; then
-  id=$(aws --output text ec2 describe-instances --filters Name=tag:Name,Values=${var.app_name}-instance Name=instance-state-name,Values=stopped --query Reservations[0].Instances[0].InstanceId)
+  id=$(aws --output text ec2 describe-instances --filters Name=tag:Name,Values=${local.instance_name} Name=instance-state-name,Values=stopped --query Reservations[0].Instances[0].InstanceId)
 fi
 
 if [[ ! $id == None ]]; then
   aws ec2 terminate-instances --instance-ids $id
-  sleep 10
-  status=$(aws ec2 --output text describe-instances --filters Name=instance-id,Values=i-0ac080c6fe6fdc985 --query Reservations[0].Instances[0].State.Name)
+  status=something
   until [[ $status == terminated ]]; do
     sleep 5
+    status=$(aws ec2 --output text describe-instances --filters "Name=instance-id,Values=$id" --query Reservations[0].Instances[0].State.Name)
   done
-  aws ec2 run-instances --launch-template '{ "LaunchTemplateName": "jenkins-launch-template", "Version": "$Latest" }'
+  aws ec2 run-instances --launch-template '{ "LaunchTemplateName": "${local.launch_template_name}", "Version": "$Latest" }'
 fi
 EOF
   }
@@ -219,7 +221,7 @@ EOF
   }
   disable_api_termination = false
   tags = merge({
-    Name = "${var.app_name}-instance-launch-template"
+    Name = local.launch_template_name
   }, local.tags)
   tag_specifications {
     resource_type = "volume"
@@ -231,10 +233,10 @@ EOF
     resource_type = "instance"
     tags = merge({
       scheduled-start-stop = "enabled"
-      Name                 = "${var.app_name}-instance"
+      Name                 = local.instance_name
     }, local.tags)
   }
-  name = "${var.app_name}-launch-template"
+  name = local.launch_template_name
   network_interfaces {
     device_index         = 0
     network_interface_id = aws_network_interface.eni.id
