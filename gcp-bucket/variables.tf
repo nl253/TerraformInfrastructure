@@ -1,10 +1,17 @@
+variable "app_name" {
+  type = string
+}
+
+variable "env" {
+  type = string
+}
+
 variable "name" {
   type = string
 }
 
 variable "location" {
   type    = string
-  default = "EUROPE-WEST2"
 }
 
 variable "versioning" {
