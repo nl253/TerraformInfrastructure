@@ -1,21 +1,18 @@
 variable "env" {
   type = string
-  default = "dev"
 }
 
 variable "app_name" {
   type = string
-  default = "test-app-pub-sub-123"
 }
 
 variable "endpoints" {
   type = list(string)
-  default = ["https://postb.in/1591679202432-3096638126298", "https://mocskss.free.beeceptor.com"]
+  default = []
 }
 
 variable "region" {
   type = string
-  default = "europe-west2"
 }
 
 variable "invokers" {

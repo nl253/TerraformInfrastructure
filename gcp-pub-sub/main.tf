@@ -1,5 +1,3 @@
-provider "google-beta" {}
-
 locals {
   tags = {
     app = var.app_name
