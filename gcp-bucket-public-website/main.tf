@@ -1,6 +1,4 @@
-provider "google-beta" {
-  project = "test-project-277710"
-}
+provider "google-beta" {}
 
 locals {
   tags = {
@@ -9,17 +7,10 @@ locals {
   }
 }
 
-resource "google_storage_bucket_iam_binding" "binding" {
-  bucket  = google_storage_bucket.bucket.name
-  members = ["allUsers"]
-  role    = "roles/storage.objectViewer"
-}
-
 resource "google_storage_bucket" "bucket" {
   name          = var.name
   force_destroy = true
   location      = var.location
-  labels        = local.tags
   cors {
     max_age_seconds = 60
     method          = ["GET"]
@@ -41,7 +32,7 @@ resource "google_storage_bucket" "bucket" {
     }
     condition {
       matches_storage_class = ["STANDARD"]
-      age                   = 30
+      age                   = var.archive_days
     }
   }
   lifecycle_rule {
@@ -51,7 +42,7 @@ resource "google_storage_bucket" "bucket" {
     }
     condition {
       matches_storage_class = ["NEARLINE"]
-      age                   = 60
+      age                   = var.archive_days * 2
     }
   }
   lifecycle_rule {
@@ -61,7 +52,15 @@ resource "google_storage_bucket" "bucket" {
     }
     condition {
       matches_storage_class = ["COLDLINE"]
-      age                   = 90
+      age                   = var.archive_days * 3
     }
   }
+  labels = local.tags
 }
+
+resource "google_storage_bucket_iam_binding" "binding" {
+  bucket  = google_storage_bucket.bucket.name
+  members = ["allUsers"]
+  role    = "roles/storage.objectViewer"
+}
+

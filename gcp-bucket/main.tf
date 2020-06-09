@@ -1,22 +1,51 @@
-provider "google-beta" {
-  project = "test-project-277710"
-}
+provider "google-beta" {}
 
-terraform {
-  backend "gcs" {
-    bucket = "ci-nl"
-    prefix = "gcs/bucket/ci-nl"
+locals {
+  tags = {
+    app = var.app_name
+    env = var.env
   }
 }
 
-variable "consumers_writers" {
-  default = []
-  type    = list(string)
-}
-
-variable "consumers_readers" {
-  default = []
-  type    = list(string)
+resource "google_storage_bucket" "bucket" {
+  name               = var.name
+  bucket_policy_only = true
+  force_destroy      = true
+  location           = var.location
+  versioning {
+    enabled = var.versioning
+  }
+  lifecycle_rule {
+    action {
+      type          = "SetStorageClass"
+      storage_class = "NEARLINE"
+    }
+    condition {
+      matches_storage_class = ["STANDARD"]
+      age                   = var.archive_days
+    }
+  }
+  lifecycle_rule {
+    action {
+      type          = "SetStorageClass"
+      storage_class = "COLDLINE"
+    }
+    condition {
+      matches_storage_class = ["NEARLINE"]
+      age                   = var.archive_days * 2
+    }
+  }
+  lifecycle_rule {
+    action {
+      type          = "SetStorageClass"
+      storage_class = "ARCHIVE"
+    }
+    condition {
+      matches_storage_class = ["COLDLINE"]
+      age                   = var.archive_days * 3
+    }
+  }
+  labels = local.tags
 }
 
 resource "google_storage_bucket_iam_binding" "binding_readers" {
@@ -33,12 +62,3 @@ resource "google_storage_bucket_iam_binding" "binding_writers" {
   count   = length(var.consumers_writers) == 0 ? 0 : 1
 }
 
-resource "google_storage_bucket" "bucket" {
-  name               = var.name
-  bucket_policy_only = true
-  force_destroy      = true
-  location           = var.location
-  versioning {
-    enabled = var.versioning
-  }
-}
