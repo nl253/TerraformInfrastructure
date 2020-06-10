@@ -5,21 +5,17 @@ provider "azurerm" {
   features {}
 }
 
-terraform {
-  backend "s3" {
-    bucket = "codebuild-nl"
-    key    = "example-func-app/terraform.tfstate"
-    region = "eu-west-2"
+locals {
+  tags = {
+    Application = var.app_name
+    Environment = var.env
   }
 }
 
 resource "azurerm_resource_group" "rg" {
   name     = "${var.app_name}-resource-group"
   location = var.region
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags     = local.tags
 }
 
 resource "azurerm_app_service_plan" "app_service_plan" {
@@ -30,10 +26,8 @@ resource "azurerm_app_service_plan" "app_service_plan" {
     tier = var.app_service_plan_tier
     size = var.app_service_plan_size
   }
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  reserved = false
+  tags     = local.tags
 }
 
 resource "azurerm_application_insights" "app_insights" {
@@ -41,10 +35,7 @@ resource "azurerm_application_insights" "app_insights" {
   location            = var.region
   name                = "${var.app_name}-app-insights"
   resource_group_name = azurerm_resource_group.rg.name
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags                = local.tags
 }
 
 resource "azurerm_function_app" "function_app" {
@@ -58,7 +49,7 @@ resource "azurerm_function_app" "function_app" {
   version                 = var.function_app_runtime_version
   client_affinity_enabled = true
   app_settings = {
-    WEBSITE_RUN_FROM_PACKAGE     = var.function_app_run_from_package ? "1" : ""
+    WEBSITE_RUN_FROM_PACKAGE     = var.code_zip_uri
     FUNCTIONS_WORKER_RUNTIME     = var.function_app_worker_runtime
     WEBSITE_NODE_DEFAULT_VERSION = var.function_app_node_version
   }
@@ -71,10 +62,7 @@ resource "azurerm_function_app" "function_app" {
       allowed_origins = var.function_app_cors_origins
     }
   }
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags                      = local.tags
   storage_connection_string = azurerm_storage_account.storage_account.primary_connection_string
 }
 
@@ -84,8 +72,5 @@ resource "azurerm_storage_account" "storage_account" {
   location                 = var.region
   name                     = "${var.app_name}store"
   resource_group_name      = azurerm_resource_group.rg.name
-  tags = {
-    Application = var.app_name
-    Environment = var.env
-  }
+  tags                     = local.tags
 }
