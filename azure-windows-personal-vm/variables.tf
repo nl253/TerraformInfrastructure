@@ -1,4 +1,4 @@
-variable "region" {
+variable "location" {
   default = "uksouth"
   type    = string
 }
@@ -16,4 +16,9 @@ variable "app_name" {
 variable "vm_size" {
   default = "Standard_F2"
   type    = string
+}
+
+variable "route53_zone_id" {
+  type    = string
+  default = "Z0336293PW1VCW37F5HY"
 }
