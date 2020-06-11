@@ -20,6 +20,7 @@ terraform {
 }
 
 locals {
+  health_check_route_path  = "/health-check"
   lambda_health_check_name = "${var.app_name}-health-check-lambda"
   vpc_id                   = var.vpc_id == null ? data.aws_vpc.vpc.id : var.vpc_id
   subnet_ids               = var.subnet_ids == null ? data.aws_subnet_ids.subnet_ids.ids : var.subnet_ids
@@ -34,32 +35,35 @@ resource "aws_apigatewayv2_api" "api" {
   name          = "${var.app_name}-http-api"
   protocol_type = "HTTP"
   cors_configuration {
+    allow_methods = [
+      "GET",
+      "POST",
+      "PUT",
+      "DELETE",
+      "PATCH",
+    ]
     allow_credentials = false
-    allow_headers     = []
-    allow_methods     = ["GET", "POST", "PUT", "DELETE", "PATCH"]
-    allow_origins     = ["*"]
-    expose_headers    = []
+    allow_headers = [
+      "Accept",
+      "Accept-Encoding",
+      "Accept-Language",
+      "Accept-Charset",
+      "Cookie",
+      "DNT",
+    ]
+    allow_origins = ["*"]
+    expose_headers = [
+      "Content-Type",
+      "Content-Encoding",
+      "Content-Language",
+      "Content-Length",
+      "Set-Cookie",
+      "Date",
+      "Age",
+      "Content-Disposition",
+    ]
   }
   tags = local.tags
-}
-
-//resource "aws_apigatewayv2_vpc_link" "api_vpc_link" {
-//  name               = "${aws_apigatewayv2_api.api.name} HTTP API VPC link"
-//  security_group_ids = local.security_group_ids
-//  subnet_ids         = local.subnet_ids
-//  tags               = local.tags
-//}
-
-resource "aws_apigatewayv2_integration" "lambda_health_check_integration" {
-  api_id             = aws_apigatewayv2_api.api.id
-  integration_type   = "AWS_PROXY"
-  integration_method = "POST"
-  integration_uri    = aws_lambda_alias.lambda_health_check_alias.invoke_arn
-  //  connection_type        = "VPC_LINK"
-  //  connection_id          = aws_apigatewayv2_vpc_link.api_vpc_link.id
-  payload_format_version = "2.0"
-  passthrough_behavior   = "WHEN_NO_MATCH"
-  timeout_milliseconds   = 29000
 }
 
 resource "aws_cloudwatch_log_group" "log_group" {
@@ -69,37 +73,64 @@ resource "aws_cloudwatch_log_group" "log_group" {
 }
 
 resource "aws_apigatewayv2_stage" "stage" {
-  api_id      = aws_apigatewayv2_api.api.id
-  name        = "${aws_apigatewayv2_api.api.name}-stage-${var.env}"
-  auto_deploy = true
-  tags        = local.tags
+  api_id          = aws_apigatewayv2_api.api.id
+  stage_variables = local.tags
+  name            = "${aws_apigatewayv2_api.api.name}-stage-${var.env}"
+  auto_deploy     = true
+  tags            = local.tags
+  default_route_settings {
+    throttling_burst_limit   = 1000
+    throttling_rate_limit    = 100
+    detailed_metrics_enabled = true
+  }
   access_log_settings {
     destination_arn = aws_cloudwatch_log_group.log_group.arn
-    format          = "{\"sourceIp\": \"$context.identity.sourceIp\", \"userAgent\": \"$context.identity.userAgent\", \"integrationStatus\": \"$context.integrationStatus	\", \"latency\": \"$context.responseLatency\", \"stage\": \"$context.stage\", \"method\": \"$context.httpMethod\", \"path\": \"$context.path\", \"status\": \"$context.status\", \"requestId\" \"$context.extendedRequestId\",	\"$context.error.message\"}"
+    format = jsonencode({
+      sourceIp          = "$context.identity.sourceIp"
+      userAgent         = "$context.identity.userAgent"
+      integrationStatus = "$context.integrationStatus"
+      latency           = "$context.responseLatency"
+      stage             = "$context.stage"
+      method            = "$context.httpMethod"
+      path              = "$context.path"
+      status            = "$context.status"
+      requestId         = "$context.extendedRequestId"
+      error             = "$context.error.message"
+    })
   }
-}
-
-module "lambda_health_check" {
-  source             = "../aws-lambda"
-  app_name           = var.app_name
-  name               = local.lambda_health_check_name
-  vpc_id             = local.vpc_id
-  subnet_ids         = local.subnet_ids
-  security_group_ids = local.security_group_ids
-  source_dir         = "${path.module}/code"
 }
 
 resource "aws_apigatewayv2_route" "route_health_check" {
   api_id         = aws_apigatewayv2_api.api.id
-  route_key      = "GET /heath-check"
+  route_key      = "GET ${local.health_check_route_path}"
   operation_name = "Health Check"
   target         = "integrations/${aws_apigatewayv2_integration.lambda_health_check_integration.id}"
 }
 
-resource "aws_lambda_alias" "lambda_health_check_alias" {
-  function_name    = module.lambda_health_check.lambda.function_name
-  function_version = module.lambda_health_check.lambda.version
-  name             = "${local.lambda_health_check_name}-${var.env}"
+module "lambda_health_check" {
+  source                 = "../aws-lambda"
+  app_name               = var.app_name
+  invoker_principal      = "apigateway.amazonaws.com"
+  runtime                = "python3.8"
+  handler                = "index.handler"
+  max_executions_per_min = 100
+  max_execution_duration = 10
+  invoker_arn            = "${aws_apigatewayv2_api.api.execution_arn}/*/*${local.health_check_route_path}"
+  name                   = local.lambda_health_check_name
+  vpc_id                 = local.vpc_id
+  subnet_ids             = local.subnet_ids
+  security_group_ids     = local.security_group_ids
+  source_dir             = "${path.module}/code"
+}
+
+resource "aws_apigatewayv2_integration" "lambda_health_check_integration" {
+  api_id                 = aws_apigatewayv2_api.api.id
+  integration_type       = "AWS_PROXY"
+  integration_method     = "POST"
+  integration_uri        = module.lambda_health_check.lambda.invoke_arn
+  payload_format_version = "2.0"
+  passthrough_behavior   = "WHEN_NO_MATCH"
+  timeout_milliseconds   = 29000
 }
 
 module "rg" {
