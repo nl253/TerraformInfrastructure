@@ -1,11 +1,9 @@
-data "aws_caller_identity" "id" {}
-
 module "role" {
   source   = "../aws-iam-role"
   app_name = var.app_name
   name     = "${replace(var.app_name, "-", "")}-${replace(var.name, "-", "")}-role"
   policies = concat([
-    aws_iam_policy.policy_kms.arn,
+    aws_iam_policy.policy.arn,
     "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
     "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
     "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess",
@@ -16,7 +14,7 @@ module "role" {
   }
 }
 
-resource "aws_iam_policy" "policy_kms" {
+resource "aws_iam_policy" "policy" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -33,6 +31,12 @@ resource "aws_iam_policy" "policy_kms" {
           "kms:DescribeKey"
         ]
         Resource = "*"
+      },
+      {
+        Sid      = "${replace(replace(replace(var.app_name, "-", ""), "_", ""), " ", "")}LambdaSNSPublishToDeadLetterTopicPolicyStatement"
+        Effect   = "Allow"
+        Action   = "sns:Publish"
+        Resource = data.aws_sns_topic.dead_letter_topic.arn
       }
     ]
   })

@@ -7,9 +7,15 @@ variable "name" {
   type = string
 }
 
+variable "dead_letter_topic_name" {
+  type = string
+  default = "failure"
+}
+
 variable "invoker_principal" {
-  type    = string
-  default = null
+  type        = string
+  default     = null
+  description = "e.g events.amazonaws.com"
 }
 
 variable "invoker_arn" {
@@ -75,22 +81,17 @@ variable "subnet_ids" {
   default = null
 }
 
+variable "ci_bucket" {
+  type    = string
+  default = "codebuild-nl"
+}
+
+variable "tracing" {
+  type = bool
+  default = true
+}
+
 variable "vpc_id" {
   type    = string
   default = null
-}
-
-data "aws_subnet_ids" "subnet_ids" {
-  vpc_id = data.aws_vpc.vpc.id
-}
-
-data "aws_security_groups" "security_groups" {
-  filter {
-    name   = "vpc-id"
-    values = [var.vpc_id == null ? data.aws_vpc.vpc.id : var.vpc_id]
-  }
-}
-
-data "aws_vpc" "vpc" {
-  default = true
 }
