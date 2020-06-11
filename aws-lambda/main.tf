@@ -16,8 +16,11 @@ resource "aws_lambda_function" "lambda" {
   tracing_config {
     mode = var.tracing ? "Active" : "PassThrough"
   }
-  dead_letter_config {
-    target_arn = data.aws_sns_topic.dead_letter_topic.arn
+  dynamic "dead_letter_config" {
+    for_each = var.dead_letter_topic_name == null ? [] : [1]
+    content {
+      target_arn = data.aws_sns_topic.dead_letter_topic.arn
+    }
   }
   environment {
     variables = merge(local.tags, var.env_vars)
