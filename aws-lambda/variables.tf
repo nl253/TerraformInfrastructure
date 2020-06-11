@@ -4,16 +4,16 @@ variable "runtime" {
 }
 
 variable "name" {
-  type    = string
+  type = string
 }
 
 variable "invoker_principal" {
-  type = string
+  type    = string
   default = null
 }
 
 variable "invoker_arn" {
-  type = string
+  type    = string
   default = null
 }
 
@@ -23,7 +23,7 @@ variable "source_dir" {
 
 variable "policies" {
   default = []
-  type = list(string)
+  type    = list(string)
 }
 
 variable "handler" {
@@ -41,26 +41,56 @@ variable "app_name" {
 }
 
 variable "env_vars" {
-  type = map(string)
+  type    = map(string)
   default = {}
 }
 
 variable "max_execution_duration" {
   default = 8
-  type = number
+  type    = number
 }
 
 variable "max_execution_failures_per_min" {
-  type = number
+  type    = number
   default = 5
 }
 
 variable "max_executions_per_min" {
   default = 30
-  type = number
+  type    = number
 }
 
 variable "storage_bucket" {
   default = "codebuild-nl"
-  type = string
+  type    = string
+}
+
+variable "security_group_ids" {
+  type    = list(string)
+  default = null
+}
+
+variable "subnet_ids" {
+  type    = list(string)
+  default = null
+}
+
+variable "vpc_id" {
+  type    = string
+  default = null
+}
+
+data "aws_subnet_ids" "subnet_ids" {
+  vpc_id = data.aws_vpc.vpc.id
+}
+
+data "aws_security_groups" "security_groups" {
+  filter {
+    name   = "vpc-id"
+    values = [var.vpc_id == null ? data.aws_vpc.vpc.id : var.vpc_id]
+  }
+}
+
+data "aws_vpc" "vpc" {
+  default = true
 }
