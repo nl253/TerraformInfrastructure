@@ -12,6 +12,7 @@ resource "aws_lambda_function" "lambda" {
     mode = "Active"
   }
   role      = module.role.role.arn
+
   runtime   = var.runtime
   s3_bucket = "codebuild-nl"
   s3_key    = aws_s3_bucket_object.lambda_code.key

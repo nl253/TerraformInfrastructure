@@ -6,6 +6,7 @@ module "role" {
   name     = "${replace(var.app_name, "-", "")}-${replace(var.name, "-", "")}-role"
   policies = concat([
     aws_iam_policy.policy_kms.arn,
+    "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole",
     "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
     "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess",
     ],
