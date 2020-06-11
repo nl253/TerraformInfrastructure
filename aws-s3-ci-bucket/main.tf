@@ -12,6 +12,8 @@ terraform {
     key            = "s3/bucket/ci/terraform.tfstate"
     region         = "eu-west-2"
     profile        = "terraform"
+    encrypt        = true
+    kms_key_id     = "2b9adaa9-848d-46d2-86c9-318ede6d1e46"
     role_arn       = "arn:aws:iam::660847692645:role/ci-upload-role"
     dynamodb_table = "ci-terraform-state-lock-table"
   }
@@ -22,6 +24,19 @@ locals {
     Application = var.app_name
     Environment = var.env
   }
+}
+
+resource "aws_kms_alias" "kms_key_alias" {
+  target_key_id = aws_kms_key.kms_key.id
+  name          = "alias/${var.app_name}-terraform-state-kms-key"
+}
+
+resource "aws_kms_key" "kms_key" {
+  key_usage                = "ENCRYPT_DECRYPT"
+  customer_master_key_spec = "SYMMETRIC_DEFAULT"
+  enable_key_rotation      = true
+  is_enabled               = true
+  tags                     = local.tags
 }
 
 resource "aws_s3_bucket" "bucket" {
