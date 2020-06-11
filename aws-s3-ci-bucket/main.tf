@@ -32,6 +32,9 @@ resource "aws_kms_alias" "kms_key_alias" {
 }
 
 resource "aws_kms_key" "kms_key" {
+  lifecycle {
+    prevent_destroy = true
+  }
   key_usage                = "ENCRYPT_DECRYPT"
   customer_master_key_spec = "SYMMETRIC_DEFAULT"
   enable_key_rotation      = true

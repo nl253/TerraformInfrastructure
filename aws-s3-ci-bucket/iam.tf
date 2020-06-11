@@ -1,12 +1,15 @@
 resource "aws_iam_user" "terraform_user" {
+  lifecycle {
+    prevent_destroy = true
+  }
   name = "${var.app_name}-terraform-user"
   tags = local.tags
 }
 
 module "terraform_admin_role" {
-  source = "../aws-iam-role"
+  source   = "../aws-iam-role"
   app_name = var.app_name
-  name = "${var.app_name}-terraform-role"
+  name     = "${var.app_name}-terraform-role"
   policies = ["arn:aws:iam::aws:policy/AdministratorAccess"]
   principal = {
     AWS = "arn:aws:iam::${data.aws_caller_identity.id.account_id}:user/${aws_iam_user.terraform_user.name}"
@@ -14,10 +17,10 @@ module "terraform_admin_role" {
 }
 
 module "upload_role" {
-  source    = "../aws-iam-role"
-  app_name  = var.app_name
-  name      = "${var.app_name}-upload-role"
-  policies  = [aws_iam_policy.policy.arn]
+  source   = "../aws-iam-role"
+  app_name = var.app_name
+  name     = "${var.app_name}-upload-role"
+  policies = [aws_iam_policy.policy.arn]
   principal = {
     AWS = "arn:aws:iam::${data.aws_caller_identity.id.account_id}:user/${aws_iam_user.terraform_user.name}"
   }
@@ -42,12 +45,23 @@ resource "aws_iam_policy" "policy" {
         Resource = "arn:aws:s3:::${var.bucket_name}"
       },
       {
-        Effect   = "Allow"
-        Action   = [
+        Effect = "Allow"
+        Action = [
           "s3:GetObject",
           "s3:PutObject",
         ]
         Resource = "arn:aws:s3:::${var.bucket_name}/*"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ],
+        Resource = "*"
       }
     ]
   })
