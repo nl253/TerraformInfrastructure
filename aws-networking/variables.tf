@@ -14,13 +14,34 @@ variable "az" {
 }
 
 variable "cidr_vpc" {
-  type = string
+  type    = string
+  default = "192.168.0.0/16"
 }
 
 variable "cidr_public" {
-  type = string
+  type    = string
+  default = "192.168.0.0/24"
 }
 
 variable "cidr_private" {
-  type = string
+  type    = string
+  default = "192.168.2.0/23"
+}
+
+variable "vpc_ids" {
+  default = []
+  type    = list(string)
+}
+
+variable "vpc_subnet_ids" {
+  default = []
+  type    = list(list(string))
+}
+
+data "aws_vpc" "vpc_default" {
+  default = true
+}
+
+data "aws_subnet_ids" "vpc_default_subnet_ids" {
+  vpc_id = data.aws_vpc.vpc_default.id
 }

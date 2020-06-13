@@ -4,7 +4,7 @@ resource "aws_subnet" "subnet_public" {
   availability_zone               = var.az
   map_public_ip_on_launch         = true
   assign_ipv6_address_on_creation = false
-  tags = local.tags
+  tags                            = merge({ Name = "${aws_vpc.vpc.tags.Name}-subnet-public" }, local.tags)
 }
 
 resource "aws_network_acl" "public_nacl" {
@@ -26,7 +26,7 @@ resource "aws_network_acl" "public_nacl" {
     rule_no    = 102
     to_port    = 0
   }
-  tags = local.tags
+  tags = merge({ Name = "${aws_subnet.subnet_public.tags.Name}-nacl" }, local.tags)
 }
 
 resource "aws_route_table" "route_table_public" {
@@ -35,7 +35,7 @@ resource "aws_route_table" "route_table_public" {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.ig.id
   }
-  tags = local.tags
+  tags = merge({ Name = "${aws_subnet.subnet_public.tags.Name}-route-table" }, local.tags)
 }
 
 resource "aws_route_table_association" "route_table_association_public" {
@@ -47,15 +47,24 @@ resource "aws_security_group" "public_sg" {
   name                   = "${var.app_name}PublicSecurityGroup"
   vpc_id                 = aws_vpc.vpc.id
   revoke_rules_on_delete = true
-  egress {
-    from_port = 0
-    protocol  = "tcp"
-    to_port   = 0
+  dynamic "egress" {
+    iterator = protocol
+    for_each = ["tcp", "udp"]
+    content {
+      from_port = 0
+      protocol  = protocol.value
+      to_port   = 0
+    }
   }
-  ingress {
-    from_port = 0
-    protocol  = "tcp"
-    to_port   = 0
+  dynamic "ingress" {
+    iterator = protocol
+    for_each = ["tcp", "udp"]
+    content {
+      from_port       = 0
+      prefix_list_ids = ["0.0.0.0/0"]
+      protocol        = protocol.value
+      to_port         = 0
+    }
   }
-  tags = local.tags
+  tags = merge({ Name = "${aws_subnet.subnet_public.tags.Name}-security-group" }, local.tags)
 }
